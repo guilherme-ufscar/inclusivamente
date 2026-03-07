@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: inclusaogemini_postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: adminpassword
+      POSTGRES_DB: inclusaogemini_db
+    ports:
+      - "8432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d inclusaogemini_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: inclusaogemini_redis
+    ports:
+      - "8379:6379"
+    volumes:
+      - redisdata:/data
+    command: ["redis-server", "--requirepass", "redispassword"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redispassword", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: inclusaogemini_backend
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=postgresql://admin:adminpassword@postgres:5432/inclusaogemini_db
+      - PORT=8001
+      - JWT_SECRET=sua-chave-secreta-aqui
+      - WHATSAPP_PROVIDER=twilio # ou z-api
+      - TWILIO_ACCOUNT_SID=seu_sid
+      - TWILIO_AUTH_TOKEN=seu_token
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    container_name: inclusaogemini_frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  redisdata:

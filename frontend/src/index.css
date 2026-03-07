@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Bradesco Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Bradesco Sans", "Outfit", ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand-primary: #13365A;
+  --color-brand-secondary: #0099D7;
+  --color-brand-accent: #0099D7;
+
+  --color-app-bg: #f4f7f9;
+  --color-app-surface: #ffffff;
+
+  --color-tutor-high: #10b981;
+  /* Emerald-500 */
+  --color-tutor-medium: #f59e0b;
+  /* Amber-500 */
+  --color-tutor-low: #ef4444;
+  /* Red-500 */
+
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+}
+
+@layer base {
+  body {
+    @apply bg-app-bg text-slate-900 font-sans antialiased min-h-screen;
+    margin: 0;
+    padding: 0;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-heading tracking-tight;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-xl;
+  }
+
+  .gradient-text {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-brand-secondary;
+  }
+}
+
+@media print {
+  body {
+    background-color: white !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .glass-panel {
+    box-shadow: none !important;
+    border: 1px solid #e2e8f0 !important;
+    backdrop-filter: none !important;
+  }
+}

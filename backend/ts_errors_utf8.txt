@@ -1,0 +1,56 @@
+﻿src/modules/activities/activities.controller.ts(43,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/modules/activities/activities.controller.ts(65,68): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/modules/activities/activities.controller.ts(71,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/modules/activities/activities.controller.ts(90,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | StringFilter<"ActivityLog"> | undefined'.
+  Type 'string[]' is not assignable to type 'string | StringFilter<"ActivityLog"> | undefined'.
+src/modules/activities/activities.controller.ts(105,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/modules/anamnesis/anamnesis.controller.ts(40,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/modules/anamnesis/anamnesis.controller.ts(87,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/modules/anamnesis/anamnesis.controller.ts(102,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | StringFilter<"AnamnesisResponse"> | undefined'.
+  Type 'string[]' is not assignable to type 'string | StringFilter<"AnamnesisResponse"> | undefined'.
+src/modules/bncc/bncc.controller.ts(36,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/modules/bncc/bncc.controller.ts(49,55): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/modules/checkins/checkins.controller.ts(38,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | StringFilter<"FamilyCheckin"> | undefined'.
+  Type 'string[]' is not assignable to type 'string | StringFilter<"FamilyCheckin"> | undefined'.
+src/modules/cognitive-profiles/cognitive-profiles.controller.ts(10,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/modules/cognitive-profiles/cognitive-profiles.controller.ts(30,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | StringFilter<"AnamnesisResponse"> | undefined'.
+  Type 'string[]' is not assignable to type 'string | StringFilter<"AnamnesisResponse"> | undefined'.
+src/modules/cognitive-profiles/cognitive-profiles.controller.ts(48,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/modules/cognitive-profiles/cognitive-profiles.controller.ts(50,17): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/modules/reports/reports.controller.ts(28,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/modules/reports/reports.controller.ts(44,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | StringFilter<"Report"> | undefined'.
+  Type 'string[]' is not assignable to type 'string | StringFilter<"Report"> | undefined'.
+src/modules/schools/schools.controller.ts(27,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/modules/schools/schools.controller.ts(70,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/modules/schools/schools.controller.ts(84,47): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/modules/students/students.controller.ts(29,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/modules/students/students.controller.ts(68,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/modules/tutor-recommendations/tutor-recommendations.controller.ts(20,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | StringFilter<"ActivityLog"> | undefined'.
+  Type 'string[]' is not assignable to type 'string | StringFilter<"ActivityLog"> | undefined'.
+src/modules/tutor-recommendations/tutor-recommendations.controller.ts(105,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | StringFilter<"ActivityLog"> | undefined'.
+  Type 'string[]' is not assignable to type 'string | StringFilter<"ActivityLog"> | undefined'.
+src/modules/tutors/tutors.controller.ts(27,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | StringFilter<"Tutor"> | undefined'.
+  Type 'string[]' is not assignable to type 'string | StringFilter<"Tutor"> | undefined'.
+src/modules/tutors/tutors.controller.ts(41,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/modules/tutors/tutors.controller.ts(80,22): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/modules/tutors/tutors.controller.ts(94,46): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.

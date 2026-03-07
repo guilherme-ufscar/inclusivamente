@@ -1,0 +1,289 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  school
+  parent
+  teacher
+  tutor
+}
+
+enum CognitiveLevel {
+  very_low
+  low
+  medium
+  high
+  very_high
+}
+
+enum LearningStyle {
+  visual
+  auditivo
+  cinestesico
+}
+
+enum Difficulty {
+  easy
+  medium
+  hard
+}
+
+enum AutonomyLevel {
+  high
+  medium
+  low
+}
+
+enum InterventionNeeded {
+  yes
+  no
+  partial
+}
+
+enum TutorRecommendation {
+  not_needed
+  sporadic
+  continuous
+}
+
+enum QuestionType {
+  text
+  single_choice
+  multiple_choice
+  boolean
+  number
+}
+
+model User {
+  id                 String               @id @default(uuid())
+  name               String
+  email              String               @unique
+  password_hash      String
+  role               Role
+  school_id          String?
+  school             School?              @relation(fields: [school_id], references: [id])
+  created_at         DateTime             @default(now())
+  updated_at         DateTime             @updatedAt
+  AnamnesisResponses AnamnesisResponse[]
+  TutorProfile       Tutor?               @relation("UserTutor")
+}
+
+model School {
+  id         String    @id @default(uuid())
+  name       String
+  email      String?
+  phone      String?
+  document   String?
+  address    String?
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  Users      User[]
+  Students   Student[]
+  Tutors     Tutor[]
+  Classes    Class[]
+}
+
+model Guardian {
+  id              String   @id @default(uuid())
+  name            String
+  email           String?
+  phone           String?
+  kinship_type_id String?
+  kinship_type    KinshipType? @relation(fields: [kinship_type_id], references: [id])
+  Students        Student[]
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+}
+
+model KinshipType {
+  id         String     @id @default(uuid())
+  name       String
+  Guardians  Guardian[]
+}
+
+model Subject {
+  id         String     @id @default(uuid())
+  name       String
+  icon       String?    @default("BookOpen")
+  color      String?    @default("text-blue-600")
+  Chapters   Chapter[]
+}
+
+model Chapter {
+  id         String     @id @default(uuid())
+  name       String
+  subject_id String
+  subject    Subject    @relation(fields: [subject_id], references: [id])
+  content    String?    @default("")
+  order      Int        @default(0)
+}
+
+model Class {
+  id         String     @id @default(uuid())
+  name       String
+  grade      String?
+  school_id  String
+  school     School     @relation(fields: [school_id], references: [id])
+  Students   Student[]
+}
+
+model Student {
+  id                  String             @id @default(uuid())
+  name                String
+  birth_date          DateTime
+  school_id           String
+  school              School             @relation(fields: [school_id], references: [id])
+  primary_guardian_id String?
+  guardian            Guardian?          @relation(fields: [primary_guardian_id], references: [id])
+  grade_level         String?
+  status              String?            @default("active")
+  class_id            String?
+  class               Class?             @relation(fields: [class_id], references: [id])
+  created_at          DateTime           @default(now())
+  updated_at          DateTime           @updatedAt
+
+  AnamnesisResponses AnamnesisResponse[]
+  CognitiveProfiles  CognitiveProfile[]
+  ActivityLogs       ActivityLog[]
+  Reports            Report[]
+  FamilyCheckins     FamilyCheckin[]
+  Tutors             Tutor[]            @relation("StudentTutors")
+}
+
+model Tutor {
+  id           String        @id @default(uuid())
+  name         String
+  email        String?
+  phone        String?
+  school_id    String
+  school       School        @relation(fields: [school_id], references: [id])
+  specialty    String?
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+  user_id      String?       @unique
+  user         User?         @relation("UserTutor", fields: [user_id], references: [id])
+  Students     Student[]     @relation("StudentTutors")
+  ActivityLogs ActivityLog[]
+}
+
+model AnamnesisSphere {
+  id          String              @id @default(uuid())
+  name        String
+  description String?
+  order_index Int                 @default(0)
+  is_active   Boolean             @default(true)
+  Questions   AnamnesisQuestion[]
+}
+
+model AnamnesisQuestion {
+  id            String              @id @default(uuid())
+  sphere_id     String
+  sphere        AnamnesisSphere     @relation(fields: [sphere_id], references: [id])
+  question_text String
+  question_type QuestionType        @default(text)
+  options_json  String? // JSON string
+  is_required   Boolean             @default(false)
+  order_index   Int                 @default(0)
+  is_active     Boolean             @default(true)
+  Responses     AnamnesisResponse[]
+}
+
+model AnamnesisResponse {
+  id                  String            @id @default(uuid())
+  student_id          String
+  student             Student           @relation(fields: [student_id], references: [id])
+  question_id         String
+  question            AnamnesisQuestion @relation(fields: [question_id], references: [id])
+  answered_by_user_id String
+  answered_by         User              @relation(fields: [answered_by_user_id], references: [id])
+  answer_json         String // JSON string
+  created_at          DateTime          @default(now())
+  updated_at          DateTime          @updatedAt
+}
+
+model CognitiveProfile {
+  id              String         @id @default(uuid())
+  student_id      String         @unique
+  student         Student        @relation(fields: [student_id], references: [id])
+  cognitive_level CognitiveLevel
+  learning_style  LearningStyle
+  special_needs   String? // JSON string
+  summary         String?
+  generated_at    DateTime       @default(now())
+  updated_at      DateTime       @updatedAt
+}
+
+model ActivityLog {
+  id                        String               @id @default(uuid())
+  student_id                String
+  student                   Student              @relation(fields: [student_id], references: [id])
+  activity_id               String
+  started_at                DateTime
+  completed_at              DateTime?
+  time_spent                Int? // em segundos
+  errors_count              Int?                 @default(0)
+  correct_count             Int?                 @default(0)
+  difficulty_perceived      Difficulty?
+  has_tutor                 Boolean              @default(false)
+  tutor_id                  String?
+  tutor                     Tutor?               @relation(fields: [tutor_id], references: [id])
+  autonomy_level            AutonomyLevel?
+  tutor_intervention_needed InterventionNeeded?
+  tutor_observations        String?
+  tutor_recommendation      TutorRecommendation?
+  created_at                DateTime             @default(now())
+  updated_at                DateTime             @updatedAt
+}
+
+model Report {
+  id                             String               @id @default(uuid())
+  student_id                     String
+  student                        Student              @relation(fields: [student_id], references: [id])
+  period_start                   DateTime
+  period_end                     DateTime
+  summary_text                   String
+  activities_with_tutor_count    Int                  @default(0)
+  activities_without_tutor_count Int                  @default(0)
+  autonomy_percentage            Float                @default(0)
+  tutor_recommendation           TutorRecommendation?
+  generated_by                   String? // user_id
+  generated_at                   DateTime             @default(now())
+}
+
+model BnccCompetence {
+  id             String           @id @default(uuid())
+  code           String           @unique
+  title          String
+  description    String?
+  stage          String?
+  subject        String?
+  ActivitiesBncc ActivityBncc[]
+}
+
+model ActivityBncc {
+  id          String         @id @default(uuid())
+  activity_id String
+  bncc_id     String
+  bncc        BnccCompetence @relation(fields: [bncc_id], references: [id])
+
+  @@unique([activity_id, bncc_id])
+}
+
+model FamilyCheckin {
+  id               String   @id @default(uuid())
+  student_id       String
+  student          Student  @relation(fields: [student_id], references: [id])
+  channel          String // whatsapp, email
+  template_version String?
+  sent_at          DateTime @default(now())
+  status           String   @default("pending") // pending, sent, replied
+  response_json    String? // JSON string
+  created_at       DateTime @default(now())
+}

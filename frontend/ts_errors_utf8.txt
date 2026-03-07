@@ -1,0 +1,7 @@
+﻿src/pages/admin/Activities.tsx(2,16): error TS6133: 'CardContent' is declared but its value is never read.
+src/pages/admin/Activities.tsx(2,29): error TS6133: 'CardHeader' is declared but its value is never read.
+src/pages/admin/Activities.tsx(2,41): error TS6133: 'CardTitle' is declared but its value is never read.
+src/pages/admin/Activities.tsx(7,23): error TS6133: 'Search' is declared but its value is never read.
+src/pages/admin/Schools.tsx(2,16): error TS6133: 'CardContent' is declared but its value is never read.
+src/pages/admin/Staff.tsx(2,16): error TS6133: 'CardContent' is declared but its value is never read.
+src/pages/admin/Students.tsx(2,16): error TS6133: 'CardContent' is declared but its value is never read.

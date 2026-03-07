@@ -1,0 +1,41 @@
+# Dependências
+node_modules/
+dist/
+dist-ssr
+*.local
+
+# IDEs e Ferramentas
+.vscode/
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Logs e Debugging
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+*.log
+
+# Variáveis de Ambiente e Segredos (NÃO ENVIAR PARA GIT)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Banco de Dados
+/backend/prisma/migrations/
+/backend/prisma/dev.db
+
+# Docker
+.dockerdata/
+
+# Build Temp
+build/
+temp/
+/frontend/dist/
