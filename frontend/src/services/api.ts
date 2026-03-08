@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://localhost:8001/api',
+    // VITE_API_URL can be set in a .env file locally for dev. Otherwise defaults to the production endpoint!
+    baseURL: import.meta.env.VITE_API_URL || 'https://www.inclusivamenteeduca.com/api',
 });
 
 api.interceptors.request.use((config) => {
