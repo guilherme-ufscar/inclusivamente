@@ -158,16 +158,21 @@ export const updateStudentAnamnesisResponse = async (req: Request | any, res: Re
             const answered_by_user_id = req.user?.userId;
             const updates = [];
             for (const item of req.body) {
-                if (item.id) {
-                    updates.push(prisma.anamnesisResponse.update({
-                        where: { id: item.id },
-                        data: { answer_json: item.answer_json }
-                    }));
-                } else {
-                    updates.push(prisma.anamnesisResponse.create({
-                        data: { student_id: req.params.id, question_id: item.question_id, answer_json: item.answer_json, answered_by_user_id }
-                    }));
-                }
+                updates.push(prisma.anamnesisResponse.upsert({
+                    where: {
+                        student_id_question_id: {
+                            student_id: req.params.id,
+                            question_id: item.question_id
+                        }
+                    },
+                    update: { answer_json: item.answer_json },
+                    create: {
+                        student_id: req.params.id,
+                        question_id: item.question_id,
+                        answer_json: item.answer_json,
+                        answered_by_user_id
+                    }
+                }));
             }
             await prisma.$transaction(updates);
             return res.status(200).json({ success: true, message: 'Responses updated' });
@@ -178,6 +183,58 @@ export const updateStudentAnamnesisResponse = async (req: Request | any, res: Re
             data: { answer_json }
         });
         return res.status(200).json({ success: true, data: response, message: 'Response updated' });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+};
+
+// Kinship (Grau de Parentesco)
+export const getKinship = async (req: Request, res: Response) => {
+    try {
+        const kinship = await prisma.kinshipType.findMany({
+            orderBy: { name: 'asc' }
+        });
+        return res.status(200).json({ success: true, data: kinship });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+};
+
+export const createKinship = async (req: Request, res: Response) => {
+    try {
+        const { name } = req.body;
+        const kinship = await prisma.kinshipType.create({
+            data: { name }
+        });
+        return res.status(201).json({ success: true, data: kinship, message: 'Kinship created' });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+};
+
+export const updateKinship = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params as any;
+        const { name } = req.body;
+        const kinship = await prisma.kinshipType.update({
+            where: { id },
+            data: { name }
+        });
+        return res.status(200).json({ success: true, data: kinship, message: 'Kinship updated' });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+};
+
+export const deleteKinship = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params as any;
+        await prisma.kinshipType.delete({ where: { id } });
+        return res.status(200).json({ success: true, message: 'Kinship deleted' });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ success: false, message: 'Internal Server Error' });

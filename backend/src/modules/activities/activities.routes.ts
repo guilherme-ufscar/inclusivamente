@@ -12,8 +12,8 @@ router.use(authenticate);
 
 router.get('/history', getGlobalTutorHistory);
 router.post('/start', startActivity);
-router.post('/:log_id/finish', finishActivity);
-router.post('/:log_id/tutor-feedback', submitTutorFeedback);
+router.post('/:id/finish', finishActivity);
+router.post('/:id/tutor-feedback', submitTutorFeedback);
 router.get('/:id', getActivityLogById);
 
 export default router;

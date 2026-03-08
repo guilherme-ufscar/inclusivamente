@@ -30,18 +30,34 @@ export default function AnamnesisWizard({ studentId, onComplete }: { studentId: 
     useEffect(() => {
         const fetchAnamnesisForm = async () => {
             try {
-                const res = await api.get('/anamnesis/spheres');
-                if (res.data.success) {
-                    setSpheres(res.data.data);
+                const [spheresRes, responsesRes] = await Promise.all([
+                    api.get('/anamnesis/spheres'),
+                    api.get(`/students/${studentId}/anamnesis`)
+                ]);
+
+                if (spheresRes.data.success) {
+                    setSpheres(spheresRes.data.data);
+                }
+
+                if (responsesRes.data.success) {
+                    const loadedResponses: Record<string, any> = {};
+                    responsesRes.data.data.forEach((r: any) => {
+                        try {
+                            loadedResponses[r.question_id] = JSON.parse(r.answer_json);
+                        } catch {
+                            loadedResponses[r.question_id] = r.answer_json;
+                        }
+                    });
+                    setResponses(loadedResponses);
                 }
             } catch (err) {
-                console.error('Failed to load anamnesis structure', err);
+                console.error('Failed to load anamnesis structure or responses', err);
             } finally {
                 setIsLoading(false);
             }
         };
         fetchAnamnesisForm();
-    }, []);
+    }, [studentId]);
 
     const handleResponseChange = (questionId: string, value: any) => {
         setResponses(prev => ({
@@ -158,8 +174,8 @@ export default function AnamnesisWizard({ studentId, onComplete }: { studentId: 
                                                             key={i}
                                                             onClick={() => handleResponseChange(q.id, opt)}
                                                             className={`flex items-center p-3 sm:px-4 rounded-xl border text-sm text-left transition-all ${responses[q.id] === opt
-                                                                    ? 'border-brand-primary bg-brand-primary/5 ring-1 ring-brand-primary text-brand-primary font-medium'
-                                                                    : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700'
+                                                                ? 'border-brand-primary bg-brand-primary/5 ring-1 ring-brand-primary text-brand-primary font-medium'
+                                                                : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700'
                                                                 }`}
                                                         >
                                                             {responses[q.id] === opt ? (

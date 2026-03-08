@@ -1,9 +1,12 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './pages/Login';
-import AdminLayout from './components/layout/AdminLayout';
-
 import AdminDashboard from './pages/admin/Dashboard';
+import TutorDashboard from './pages/tutor/Dashboard';
+import ParentDashboard from './pages/parent/Dashboard';
+import MyStudentsPage from './pages/tutor/MyStudents';
+import FamilyReportsPage from './pages/parent/Reports';
+import AppLayout from './components/layout/AppLayout';
 import AnamnesisPage from './pages/admin/Anamnesis';
 import SchoolsPage from './pages/admin/Schools';
 import StaffPage from './pages/admin/Staff';
@@ -22,7 +25,6 @@ import SubjectsPage from './pages/admin/Subjects';
 import ChaptersPage from './pages/admin/Chapters';
 
 const SchoolDashboard = () => <div>School Dashboard</div>;
-const TutorDashboard = () => <div>Tutor Dashboard</div>;
 
 const ProtectedRoute = ({ children, allowedRoles }: { children: JSX.Element, allowedRoles?: string[] }) => {
   const { user, token, isLoading } = useAuth();
@@ -48,28 +50,36 @@ const AppRoutes = () => {
         )
       } />
 
-      <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><AdminDashboard /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/anamnesis" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><AnamnesisPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/schools" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><SchoolsPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/staff" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><StaffPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/students" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><StudentsPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/activities" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><ActivitiesPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/reports" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><ReportsPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><SettingsPage /></AdminLayout></ProtectedRoute>} />
+      <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><AdminDashboard /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/anamnesis" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><AnamnesisPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/schools" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><SchoolsPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/staff" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><StaffPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/students" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><StudentsPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/activities" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><ActivitiesPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/reports" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><ReportsPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><SettingsPage /></AppLayout></ProtectedRoute>} />
 
       {/* Novas rotas de conformidade de escopo */}
-      <Route path="/admin/tutor-history" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><TutorHistoryPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/checkins" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><CheckinsPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/classes" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><ClassesPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/subjects" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><SubjectsPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/chapters" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><ChaptersPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/bncc" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><BnccPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/anamnesis-spheres" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><AnamnesisSpheresPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/anamnesis-questions" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><AnamnesisQuestionsPage /></AdminLayout></ProtectedRoute>} />
-      <Route path="/admin/kinship" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout><KinshipPage /></AdminLayout></ProtectedRoute>} />
+      <Route path="/admin/tutor-history" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><TutorHistoryPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/checkins" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><CheckinsPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/classes" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><ClassesPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/subjects" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><SubjectsPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/chapters" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><ChaptersPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/bncc" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><BnccPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/anamnesis-spheres" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><AnamnesisSpheresPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/anamnesis-questions" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><AnamnesisQuestionsPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/kinship" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><KinshipPage /></AppLayout></ProtectedRoute>} />
 
-      <Route path="/school/dashboard" element={<ProtectedRoute allowedRoles={['school']}><SchoolDashboard /></ProtectedRoute>} />
-      <Route path="/tutor/dashboard" element={<ProtectedRoute allowedRoles={['tutor']}><TutorDashboard /></ProtectedRoute>} />
+      <Route path="/school/dashboard" element={<ProtectedRoute allowedRoles={['school']}><AppLayout><SchoolDashboard /></AppLayout></ProtectedRoute>} />
+
+      <Route path="/tutor/dashboard" element={<ProtectedRoute allowedRoles={['tutor']}><AppLayout><TutorDashboard /></AppLayout></ProtectedRoute>} />
+      <Route path="/tutor/students" element={<ProtectedRoute allowedRoles={['tutor']}><AppLayout><MyStudentsPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/tutor/activities" element={<ProtectedRoute allowedRoles={['tutor']}><AppLayout><ActivitiesPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/tutor/reports" element={<ProtectedRoute allowedRoles={['tutor']}><AppLayout><ReportsPage /></AppLayout></ProtectedRoute>} />
+
+      <Route path="/parent/dashboard" element={<ProtectedRoute allowedRoles={['parent']}><AppLayout><ParentDashboard /></AppLayout></ProtectedRoute>} />
+      <Route path="/parent/reports" element={<ProtectedRoute allowedRoles={['parent']}><AppLayout><FamilyReportsPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/parent/activities" element={<ProtectedRoute allowedRoles={['parent']}><AppLayout><ActivitiesPage /></AppLayout></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>

@@ -34,13 +34,13 @@ export const startActivity = async (req: Request, res: Response) => {
 
 export const finishActivity = async (req: Request, res: Response) => {
     try {
-        const { log_id } = req.params as any;
+        const { id } = req.params as any;
         const { time_spent, errors_count, correct_count, difficulty_perceived } = req.body;
 
         const diff = difficulty_perceived as Difficulty;
 
         const log = await prisma.activityLog.update({
-            where: { id: log_id },
+            where: { id: id },
             data: {
                 completed_at: new Date(),
                 time_spent,
@@ -59,10 +59,10 @@ export const finishActivity = async (req: Request, res: Response) => {
 
 export const submitTutorFeedback = async (req: Request, res: Response) => {
     try {
-        const { log_id } = req.params as any;
+        const { id } = req.params as any;
         const { autonomy_level, tutor_intervention_needed, tutor_observations, tutor_recommendation } = req.body;
 
-        const log = await prisma.activityLog.findUnique({ where: { id: log_id } });
+        const log = await prisma.activityLog.findUnique({ where: { id: id } });
         if (!log) {
             return res.status(404).json({ success: false, message: 'Activity log not found.' });
         }
@@ -80,7 +80,7 @@ export const submitTutorFeedback = async (req: Request, res: Response) => {
         }
 
         const updatedLog = await prisma.activityLog.update({
-            where: { id: log_id },
+            where: { id: id },
             data: {
                 autonomy_level: autonomy_level as AutonomyLevel,
                 tutor_intervention_needed: tutor_intervention_needed as InterventionNeeded,

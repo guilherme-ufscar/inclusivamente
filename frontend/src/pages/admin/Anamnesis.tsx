@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import AnamnesisWizard from '../../components/anamnesis/AnamnesisWizard';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -12,8 +13,10 @@ interface Student {
 }
 
 export default function AnamnesisPage() {
+    const [searchParams] = useSearchParams();
+    const studentIdParam = searchParams.get('studentId');
     const [students, setStudents] = useState<Student[]>([]);
-    const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
+    const [selectedStudent, setSelectedStudent] = useState<string | null>(studentIdParam);
     const [isCompleted, setIsCompleted] = useState(false);
 
     useEffect(() => {
@@ -22,6 +25,12 @@ export default function AnamnesisPage() {
             setStudents(res.data.data);
         }).catch(console.error);
     }, []);
+
+    useEffect(() => {
+        if (studentIdParam) {
+            setSelectedStudent(studentIdParam);
+        }
+    }, [studentIdParam]);
 
     if (isCompleted) {
         return (

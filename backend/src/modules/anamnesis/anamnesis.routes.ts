@@ -1,10 +1,20 @@
 import { Router } from 'express';
-import { getSpheres, createSphere, updateSphere, deleteSphere, getQuestions, createQuestion, updateQuestion, deleteQuestion } from './anamnesis.controller';
+import {
+    getSpheres, createSphere, updateSphere, deleteSphere,
+    getQuestions, createQuestion, updateQuestion, deleteQuestion,
+    getKinship, createKinship, updateKinship, deleteKinship
+} from './anamnesis.controller';
 import { authenticate, authorize } from '../../common/middleware/auth';
 
 const router = Router();
 
 router.use(authenticate);
+
+// Kinship
+router.get('/kinship', getKinship);
+router.post('/kinship', authorize(['admin', 'school']), createKinship);
+router.put('/kinship/:id', authorize(['admin', 'school']), updateKinship);
+router.delete('/kinship/:id', authorize(['admin', 'school']), deleteKinship);
 
 // Spheres
 router.get('/spheres', getSpheres);

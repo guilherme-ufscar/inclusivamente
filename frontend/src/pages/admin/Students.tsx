@@ -13,7 +13,10 @@ interface Student {
     birth_date: string;
     grade_level: string;
     school_id: string;
+    class_id?: string;
     School?: { name: string };
+    class?: { name: string };
+    Tutors?: Array<{ id: string, name: string }>;
     Reports?: Array<{ tutor_recommendation: string }>;
 }
 
@@ -22,9 +25,23 @@ interface School {
     name: string;
 }
 
+interface ClassData {
+    id: string;
+    name: string;
+    school_id: string;
+}
+
+interface Tutor {
+    id: string;
+    name: string;
+    school_id: string;
+}
+
 export default function StudentsPage() {
     const [students, setStudents] = useState<Student[]>([]);
     const [schools, setSchools] = useState<School[]>([]);
+    const [classes, setClasses] = useState<ClassData[]>([]);
+    const [tutors, setTutors] = useState<Tutor[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -34,18 +51,24 @@ export default function StudentsPage() {
         name: '',
         birth_date: '',
         grade_level: '',
-        school_id: ''
+        school_id: '',
+        class_id: '',
+        tutor_ids: [] as string[]
     });
 
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const [studentsRes, schoolsRes] = await Promise.all([
+            const [studentsRes, schoolsRes, classesRes, tutorsRes] = await Promise.all([
                 api.get('/students'),
-                api.get('/schools')
+                api.get('/schools'),
+                api.get('/classes'),
+                api.get('/tutors')
             ]);
             setStudents(studentsRes.data.data || []);
             setSchools(schoolsRes.data.data || []);
+            setClasses(classesRes.data.data || []);
+            setTutors(tutorsRes.data.data || []);
         } catch (err) {
             console.error('Failed to fetch data', err);
         } finally {
@@ -64,7 +87,9 @@ export default function StudentsPage() {
                 name: student.name,
                 birth_date: student.birth_date ? new Date(student.birth_date).toISOString().split('T')[0] : '',
                 grade_level: student.grade_level || '',
-                school_id: student.school_id || ''
+                school_id: student.school_id || '',
+                class_id: student.class_id || '',
+                tutor_ids: student.Tutors?.map(t => t.id) || []
             });
         } else {
             setEditingId(null);
@@ -72,7 +97,9 @@ export default function StudentsPage() {
                 name: '',
                 birth_date: '',
                 grade_level: '',
-                school_id: schools[0]?.id || ''
+                school_id: schools[0]?.id || '',
+                class_id: '',
+                tutor_ids: []
             });
         }
         setIsModalOpen(true);
@@ -147,7 +174,9 @@ export default function StudentsPage() {
                         <thead className="bg-slate-50/50 text-slate-500 font-medium border-b border-slate-100">
                             <tr>
                                 <th className="px-6 py-4">Aluno</th>
+                                <th className="px-6 py-4">Turma</th>
                                 <th className="px-6 py-4">Série / Grau</th>
+                                <th className="px-6 py-4">Tutores</th>
                                 <th className="px-6 py-4">Necessita Tutor?</th>
                                 <th className="px-6 py-4">Escola Matrícula</th>
                                 <th className="px-6 py-4 text-right">Ações</th>
@@ -156,11 +185,11 @@ export default function StudentsPage() {
                         <tbody className="divide-y divide-slate-100">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={4} className="px-6 py-8 text-center text-slate-500">Caregando alunos...</td>
+                                    <td colSpan={7} className="px-6 py-8 text-center text-slate-500">Caregando alunos...</td>
                                 </tr>
                             ) : students.length === 0 ? (
                                 <tr>
-                                    <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
+                                    <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
                                         <GraduationCap className="w-12 h-12 mx-auto text-slate-300 mb-3" />
                                         Nenhum aluno cadastrado no sistema.
                                     </td>
@@ -179,8 +208,24 @@ export default function StudentsPage() {
                                                 </span>
                                             </div>
                                         </td>
+                                        <td className="px-6 py-4 text-slate-600 font-medium">
+                                            {student.class?.name || 'Sem turma'}
+                                        </td>
                                         <td className="px-6 py-4 text-slate-600">
                                             {student.grade_level || 'Não informado'}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-wrap gap-1">
+                                                {student.Tutors && student.Tutors.length > 0 ? (
+                                                    student.Tutors.map(t => (
+                                                        <span key={t.id} className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[10px] font-medium border border-indigo-100">
+                                                            {t.name}
+                                                        </span>
+                                                    ))
+                                                ) : (
+                                                    <span className="text-slate-400 text-xs italic">Sem tutor</span>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             {student.Reports && student.Reports.length > 0 ? (
@@ -205,7 +250,7 @@ export default function StudentsPage() {
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
                                                 <button
-                                                    onClick={() => navigate('/admin/anamnesis')}
+                                                    onClick={() => navigate(`/admin/anamnesis?studentId=${student.id}`)}
                                                     title="Fazer Anamnese"
                                                     className="p-2 text-brand-primary hover:bg-brand-primary/10 rounded-lg transition-colors"
                                                 >
@@ -275,6 +320,45 @@ export default function StudentsPage() {
                                 <option key={school.id} value={school.id}>{school.name}</option>
                             ))}
                         </select>
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className="text-sm font-medium text-slate-700">Turma (Opcional)</label>
+                        <select
+                            className="flex h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                            value={formData.class_id}
+                            onChange={e => setFormData({ ...formData, class_id: e.target.value })}
+                        >
+                            <option value="">Nenhuma turma</option>
+                            {classes.filter(c => c.school_id === formData.school_id).map(c => (
+                                <option key={c.id} value={c.id}>{c.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className="text-sm font-medium text-slate-700">Tutores Responsáveis</label>
+                        <div className="grid grid-cols-2 gap-2 p-3 border border-slate-200 rounded-xl bg-slate-50/50 max-h-32 overflow-y-auto">
+                            {tutors.filter(t => t.school_id === formData.school_id).map(tutor => (
+                                <label key={tutor.id} className="flex items-center gap-2 cursor-pointer hover:bg-white p-1 rounded-md transition-colors">
+                                    <input
+                                        type="checkbox"
+                                        className="rounded border-slate-300 text-brand-primary focus:ring-brand-primary"
+                                        checked={formData.tutor_ids.includes(tutor.id)}
+                                        onChange={(e) => {
+                                            const newIds = e.target.checked
+                                                ? [...formData.tutor_ids, tutor.id]
+                                                : formData.tutor_ids.filter(id => id !== tutor.id);
+                                            setFormData({ ...formData, tutor_ids: newIds });
+                                        }}
+                                    />
+                                    <span className="text-xs text-slate-700 truncate">{tutor.name}</span>
+                                </label>
+                            ))}
+                            {tutors.filter(t => t.school_id === formData.school_id).length === 0 && (
+                                <p className="text-[10px] text-slate-400 col-span-2 italic">Nenhum tutor cadastrado nesta escola.</p>
+                            )}
+                        </div>
                     </div>
 
                     <div className="pt-4 flex justify-end gap-3">

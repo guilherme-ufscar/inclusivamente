@@ -9,6 +9,7 @@ import reportsRoutes from './modules/reports/reports.routes';
 import checkinRoutes from './modules/checkins/checkins.routes';
 import bnccRoutes from './modules/bncc/bncc.routes';
 import subjectsRoutes from './modules/subjects/subjects.routes';
+import classesRoutes from './modules/classes/classes.routes';
 
 const router = Router();
 
@@ -22,5 +23,6 @@ router.use('/reports', reportsRoutes);
 router.use('/checkins', checkinRoutes);
 router.use('/bncc', bnccRoutes);
 router.use('/subjects', subjectsRoutes);
+router.use('/classes', classesRoutes);
 
 export default router;

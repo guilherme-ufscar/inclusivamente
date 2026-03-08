@@ -58,8 +58,18 @@ A maneira mais recomendada e rápida de subir o ambiente completo é utilizando 
    - **Back-End API:** [http://localhost:8001](http://localhost:8001)
 
 ### 🔑 Credenciais de Teste
-- **E-mail:** `admin@inclusivamente.com`
-- **Senha:** `admin123`
+
+- **🔒 Administrador Geral:**
+  - **E-mail:** `admin@inclusivamente.com`
+  - **Senha:** `admin123`
+
+- **👨‍🏫 Tutor (Ana Professora):**
+  - **E-mail:** `tutor@inclusivamente.com`
+  - **Senha:** `tutor123`
+
+- **👨‍👩‍👦 Responsável (Pai do João):**
+  - **E-mail:** `pai@inclusivamente.com`
+  - **Senha:** `pai123`
 
 ---
 

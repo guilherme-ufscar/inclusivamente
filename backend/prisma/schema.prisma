@@ -206,6 +206,8 @@ model AnamnesisResponse {
   answer_json         String // JSON string
   created_at          DateTime          @default(now())
   updated_at          DateTime          @updatedAt
+
+  @@unique([student_id, question_id])
 }
 
 model CognitiveProfile {
@@ -253,6 +255,7 @@ model Report {
   activities_without_tutor_count Int                  @default(0)
   autonomy_percentage            Float                @default(0)
   tutor_recommendation           TutorRecommendation?
+  tutor_observations             String?
   generated_by                   String? // user_id
   generated_at                   DateTime             @default(now())
 }
