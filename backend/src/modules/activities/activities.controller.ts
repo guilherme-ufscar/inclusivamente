@@ -5,11 +5,27 @@ const prisma = new PrismaClient();
 
 export const startActivity = async (req: Request | any, res: Response) => {
     try {
-        let { student_id, activity_id, has_tutor, tutor_id } = req.body;
+        let { student_id, studentId, activity_id, activityId, has_tutor, hasTutor, tutor_id, tutorId } = req.body;
+
+        student_id = student_id || studentId;
+        activity_id = activity_id || activityId;
+        has_tutor = has_tutor !== undefined ? has_tutor : hasTutor;
+        tutor_id = tutor_id || tutorId;
 
         // Se student_id não vier no body, pega do token (ideal para o jogo)
-        if (!student_id && req.user?.id) {
-            student_id = req.user.id;
+        if (!student_id && req.user) {
+            if (req.user.id) {
+                // Se o token já tiver o id do estudante (adicionado no login/registro)
+                student_id = req.user.id;
+            } else {
+                // Tenta buscar o profile do estudante associado a este usuario
+                const studentProfile = await prisma.student.findFirst({
+                    where: { user_id: req.user.userId }
+                });
+                if (studentProfile) {
+                    student_id = studentProfile.id;
+                }
+            }
         }
 
         if (!student_id || !activity_id) {
@@ -40,7 +56,12 @@ export const startActivity = async (req: Request | any, res: Response) => {
 export const finishActivity = async (req: Request, res: Response) => {
     try {
         const { id } = req.params as any;
-        const { time_spent, errors_count, correct_count, difficulty_perceived } = req.body;
+        let { time_spent, timeSpent, errors_count, errorsCount, correct_count, correctCount, difficulty_perceived, difficultyPerceived } = req.body;
+
+        time_spent = time_spent ?? timeSpent;
+        errors_count = errors_count ?? errorsCount;
+        correct_count = correct_count ?? correctCount;
+        difficulty_perceived = difficulty_perceived ?? difficultyPerceived;
 
         const diff = difficulty_perceived as Difficulty;
 
@@ -48,9 +69,9 @@ export const finishActivity = async (req: Request, res: Response) => {
             where: { id: id },
             data: {
                 completed_at: new Date(),
-                time_spent,
-                errors_count,
-                correct_count,
+                time_spent: time_spent !== undefined ? Number(time_spent) : undefined,
+                errors_count: errors_count !== undefined ? Number(errors_count) : undefined,
+                correct_count: correct_count !== undefined ? Number(correct_count) : undefined,
                 difficulty_perceived: diff
             }
         });
