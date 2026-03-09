@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Card } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
-import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 import api from '../../services/api';
-import { Play, Check, Activity, MessageSquare } from 'lucide-react';
+import { Check, Activity, MessageSquare, RefreshCw } from 'lucide-react';
 
 interface Student {
     id: string;
@@ -26,22 +25,18 @@ interface ActivityLog {
 
 export default function ActivitiesPage() {
     const [students, setStudents] = useState<Student[]>([]);
-    const [tutors, setTutors] = useState<any[]>([]);
     const [selectedStudentId, setSelectedStudentId] = useState<string>('');
     const [activities, setActivities] = useState<ActivityLog[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
     // Modals state
-    const [isStartModalOpen, setIsStartModalOpen] = useState(false);
     const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
     const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
 
-    const [startForm, setStartForm] = useState({ activity_id: '', has_tutor: false, tutor_id: '' });
     const [feedbackForm, setFeedbackForm] = useState({ autonomy_level: 'medium', tutor_intervention_needed: 'yes', tutor_observations: '' });
 
     useEffect(() => {
         api.get('/students').then(res => setStudents(res.data.data)).catch(console.error);
-        api.get('/tutors').then(res => setTutors(res.data.data)).catch(console.error);
     }, []);
 
     useEffect(() => {
@@ -64,26 +59,6 @@ export default function ActivitiesPage() {
         }
     };
 
-    const handleStartActivity = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            const res = await api.post('/activities/start', { ...startForm, student_id: selectedStudentId });
-            const novaAtividadeId = res.data.data.id;
-
-            setIsStartModalOpen(false);
-            fetchActivities();
-
-            // Aqui é onde passamos o ID para o jogo!
-            const gameUrl = `https://jogos.inclusivamenteeduca.com/jogar?log_id=${novaAtividadeId}`;
-
-            if (window.confirm(`Atividade registrada no sistema!\n\nO servidor gerou o seguinte log_id para esta sessão: \n${novaAtividadeId}\n\nÉ este ID que precisa ser passado para o jogo pela URL.\nDeseja simular a abertura do jogo (em nova aba) agora?`)) {
-                window.open(gameUrl, '_blank');
-            }
-        } catch (err: any) {
-            console.error('Erro detalhado:', err.response?.data);
-            alert('Erro ao iniciar atividade: ' + (err.response?.data?.message || err.message));
-        }
-    };
 
     const handleFinishActivity = async (id: string) => {
         try {
@@ -128,11 +103,11 @@ export default function ActivitiesPage() {
                         </select>
                     </div>
                     <Button
-                        disabled={!selectedStudentId}
-                        onClick={() => setIsStartModalOpen(true)}
+                        disabled={!selectedStudentId || isLoading}
+                        onClick={() => fetchActivities()}
                         variant="primary"
                     >
-                        <Play className="w-4 h-4 mr-2" /> Iniciar Atividade
+                        <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} /> Atualizar Histórico
                     </Button>
                 </div>
 
@@ -208,52 +183,6 @@ export default function ActivitiesPage() {
                 </div>
             </Card>
 
-            {/* Start Activity Modal */}
-            <Modal isOpen={isStartModalOpen} onClose={() => setIsStartModalOpen(false)} title="Iniciar Nova Atividade">
-                <form onSubmit={handleStartActivity} className="space-y-4">
-                    <Input
-                        label="Identificador / Nome da Atividade"
-                        required
-                        placeholder="Ex: Jogo da Memória"
-                        value={startForm.activity_id}
-                        onChange={e => setStartForm({ ...startForm, activity_id: e.target.value })}
-                    />
-                    <div className="flex items-center gap-2 mt-4">
-                        <input
-                            type="checkbox"
-                            id="has_tutor"
-                            checked={startForm.has_tutor}
-                            onChange={e => setStartForm({ ...startForm, has_tutor: e.target.checked })}
-                            className="rounded h-4 w-4 text-brand-primary focus:ring-brand-primary border-slate-300"
-                        />
-                        <label htmlFor="has_tutor" className="text-sm font-medium text-slate-700 cursor-pointer">Atividade acompanhada por Tutor?</label>
-                    </div>
-
-                    {startForm.has_tutor && (
-                        <div className="space-y-1 mt-4 animate-in fade-in slide-in-from-top-1">
-                            <label className="text-sm font-medium text-slate-700">Tutor Responsável</label>
-                            <select
-                                required={startForm.has_tutor}
-                                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary outline-none bg-white shadow-sm"
-                                value={startForm.tutor_id}
-                                onChange={e => setStartForm({ ...startForm, tutor_id: e.target.value })}
-                            >
-                                <option value="" disabled>Selecione o tutor avaliador</option>
-                                {tutors.length > 0 ? (
-                                    tutors.map(t => <option key={t.id} value={t.id}>{t.name} ({t.specialty || 'Geral'})</option>)
-                                ) : (
-                                    <option disabled>Nenhum tutor cadastrado para esta escola</option>
-                                )}
-                            </select>
-                        </div>
-                    )}
-
-                    <div className="pt-4 flex justify-end gap-3">
-                        <Button type="button" variant="ghost" onClick={() => setIsStartModalOpen(false)}>Cancelar</Button>
-                        <Button type="submit">Iniciar</Button>
-                    </div>
-                </form>
-            </Modal>
 
             {/* Tutor Feedback Modal */}
             <Modal isOpen={isFeedbackModalOpen} onClose={() => setIsFeedbackModalOpen(false)} title="Feedback do Tutor">

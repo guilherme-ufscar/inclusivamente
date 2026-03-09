@@ -3,9 +3,14 @@ import { PrismaClient, AutonomyLevel, InterventionNeeded, Difficulty } from '@pr
 
 const prisma = new PrismaClient();
 
-export const startActivity = async (req: Request, res: Response) => {
+export const startActivity = async (req: Request | any, res: Response) => {
     try {
-        const { student_id, activity_id, has_tutor, tutor_id } = req.body;
+        let { student_id, activity_id, has_tutor, tutor_id } = req.body;
+
+        // Se student_id não vier no body, pega do token (ideal para o jogo)
+        if (!student_id && req.user?.id) {
+            student_id = req.user.id;
+        }
 
         if (!student_id || !activity_id) {
             return res.status(400).json({ success: false, message: 'Student ID and Activity ID are required' });
