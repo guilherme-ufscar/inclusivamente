@@ -148,3 +148,23 @@ export const updateStudent = async (req: AuthRequest, res: Response) => {
         return res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
+
+export const updateMyProgression = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.userId;
+        const { coins, persona } = req.body;
+
+        const student = await prisma.student.update({
+            where: { user_id: userId } as any,
+            data: {
+                coins: coins !== undefined ? Number(coins) : undefined,
+                persona: persona !== undefined ? Number(persona) : undefined,
+            } as any
+        });
+
+        return res.status(200).json({ success: true, data: student, message: 'Progression updated successfully' });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+};

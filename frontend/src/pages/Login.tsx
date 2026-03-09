@@ -25,8 +25,16 @@ export default function Login() {
         try {
             const response = await api.post('/auth/login', { email, password });
             if (response.data.success) {
-                login(response.data.data.token, response.data.data.user);
-                navigate(`/${response.data.data.user.role}/dashboard`);
+                const { token, user } = response.data.data;
+                login(token, user);
+
+                // Redireciona apenas alunos para o jogo
+                if (user.role === 'student') {
+                    window.location.href = `https://game.inclusivamenteeduca.com/?token=${token}`;
+                    return;
+                }
+
+                navigate(`/${user.role}/dashboard`);
             }
         } catch (err: any) {
             setError(err.response?.data?.message || 'Erro ao conectar no servidor.');

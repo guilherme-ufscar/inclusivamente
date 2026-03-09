@@ -13,6 +13,7 @@ enum Role {
   parent
   teacher
   tutor
+  student
 }
 
 enum CognitiveLevel {
@@ -73,6 +74,7 @@ model User {
   updated_at         DateTime             @updatedAt
   AnamnesisResponses AnamnesisResponse[]
   TutorProfile       Tutor?               @relation("UserTutor")
+  StudentProfile     Student?             @relation("UserStudent")
 }
 
 model School {
@@ -95,6 +97,8 @@ model Guardian {
   name            String
   email           String?
   phone           String?
+  cpf             String?
+  address         String?
   kinship_type_id String?
   kinship_type    KinshipType? @relation(fields: [kinship_type_id], references: [id])
   Students        Student[]
@@ -146,6 +150,14 @@ model Student {
   status              String?            @default("active")
   class_id            String?
   class               Class?             @relation(fields: [class_id], references: [id])
+  cpf                 String?
+  rg                  String?
+  diagnosis           String?            // ex: TEA, TDAH, Dislexia
+  needs_tutor         Boolean            @default(false)
+  user_id             String?            @unique
+  user                User?              @relation("UserStudent", fields: [user_id], references: [id])
+  coins               Int                @default(0)
+  persona             Int                @default(0) // 0: padrão, 1: DI, 2: TEA
   created_at          DateTime           @default(now())
   updated_at          DateTime           @updatedAt
 

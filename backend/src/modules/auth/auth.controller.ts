@@ -57,6 +57,31 @@ export const register = async (req: Request, res: Response) => {
             }
         }
 
+        // If the user is a student, ensure they have a linked Student profile
+        let studentTokenInfo = {};
+        if ((userRole as string) === 'student' && school_id) {
+            const student = await prisma.student.create({
+                data: {
+                    name,
+                    birth_date: req.body.birthdate ? new Date(req.body.birthdate) : new Date(),
+                    school_id,
+                    grade_level: req.body.ano_escolar || null,
+                    user_id: user.id
+                } as any
+            });
+
+            const s = student as any;
+            studentTokenInfo = {
+                id: s.id,
+                username: user.name,
+                birthdate: s.birth_date.toISOString(),
+                school_id: s.school_id,
+                ano_escolar: s.grade_level || 'N/A',
+                coins: s.coins || 0,
+                persona: s.persona || 0
+            };
+        }
+
         // Se for um responsavel
         if (userRole === 'parent') {
             const guardian = await prisma.guardian.create({
@@ -76,7 +101,12 @@ export const register = async (req: Request, res: Response) => {
             }
         }
 
-        const token = generateToken({ userId: user.id, role: user.role, schoolId: user.school_id || undefined });
+        const token = generateToken({
+            userId: user.id,
+            role: user.role,
+            schoolId: user.school_id || undefined,
+            ...studentTokenInfo
+        });
 
         return res.status(201).json({
             success: true,
@@ -110,7 +140,32 @@ export const login = async (req: Request, res: Response) => {
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
 
-        const token = generateToken({ userId: user.id, role: user.role, schoolId: user.school_id || undefined });
+        let studentInfo = {};
+        if ((user.role as string) === 'student') {
+            const student = await prisma.student.findFirst({
+                where: { user_id: user.id } as any
+            });
+
+            if (student) {
+                const s = student as any;
+                studentInfo = {
+                    id: s.id,
+                    username: user.name,
+                    birthdate: s.birth_date instanceof Date ? s.birth_date.toISOString() : s.birth_date,
+                    school_id: s.school_id,
+                    ano_escolar: s.grade_level || 'N/A',
+                    coins: s.coins || 0,
+                    persona: s.persona || 0
+                };
+            }
+        }
+
+        const token = generateToken({
+            userId: user.id,
+            role: user.role,
+            schoolId: user.school_id || undefined,
+            ...studentInfo
+        });
 
         return res.status(200).json({
             success: true,
@@ -138,10 +193,36 @@ export const getMe = async (req: Request | any, res: Response) => {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
 
+        let studentProfile = null;
+        if ((user.role as string) === 'student') {
+            const student = await prisma.student.findFirst({
+                where: { user_id: user.id } as any
+            });
+            if (student) {
+                const s = student as any;
+                studentProfile = {
+                    id: s.id,
+                    username: user.name,
+                    birthdate: s.birth_date,
+                    school_id: s.school_id,
+                    ano_escolar: s.grade_level || 'N/A',
+                    coins: s.coins || 0,
+                    persona: s.persona || 0
+                };
+            }
+        }
+
         return res.status(200).json({
             success: true,
             data: {
-                user: { id: user.id, name: user.name, email: user.email, role: user.role, school_id: user.school_id },
+                user: {
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    school_id: user.school_id,
+                    student: studentProfile
+                },
             },
         });
     } catch (error: any) {

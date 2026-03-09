@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getStudents, getStudentById, createStudent, updateStudent } from './students.controller';
+import { getStudents, getStudentById, createStudent, updateStudent, updateMyProgression } from './students.controller';
 import { getStudentAnamnesis, createStudentAnamnesisResponse, updateStudentAnamnesisResponse } from '../anamnesis/anamnesis.controller';
 import { authenticate, authorize } from '../../common/middleware/auth';
 
@@ -8,6 +8,7 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/', getStudents);
+router.patch('/me/progression', updateMyProgression);
 router.get('/:id', getStudentById);
 router.post('/', authorize(['admin', 'school']), createStudent);
 router.put('/:id', authorize(['admin', 'school']), updateStudent);
