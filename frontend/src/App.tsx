@@ -23,6 +23,7 @@ import KinshipPage from './pages/admin/Kinship';
 import ClassesPage from './pages/admin/Classes';
 import SubjectsPage from './pages/admin/Subjects';
 import ChaptersPage from './pages/admin/Chapters';
+import GuardiansPage from './pages/admin/Guardians';
 
 const SchoolDashboard = () => <div>School Dashboard</div>;
 
@@ -60,6 +61,7 @@ const AppRoutes = () => {
       <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><SettingsPage /></AppLayout></ProtectedRoute>} />
 
       {/* Novas rotas de conformidade de escopo */}
+      <Route path="/admin/guardians" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><GuardiansPage /></AppLayout></ProtectedRoute>} />
       <Route path="/admin/tutor-history" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><TutorHistoryPage /></AppLayout></ProtectedRoute>} />
       <Route path="/admin/checkins" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><CheckinsPage /></AppLayout></ProtectedRoute>} />
       <Route path="/admin/classes" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><ClassesPage /></AppLayout></ProtectedRoute>} />

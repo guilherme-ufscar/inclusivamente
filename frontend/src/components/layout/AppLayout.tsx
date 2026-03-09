@@ -58,6 +58,7 @@ export default function AppLayout({ children }: LayoutProps) {
                 { category: 'Sistema' },
                 { name: 'BNCC', icon: Settings, path: '/admin/bncc' },
                 { name: 'Parentesco', icon: Users, path: '/admin/kinship' },
+                { name: 'Responsáveis', icon: Users, path: '/admin/guardians' },
                 { name: 'Escolas', icon: Settings, path: '/admin/schools' },
                 { name: 'Configurações', icon: Settings, path: '/admin/settings' },
             ];

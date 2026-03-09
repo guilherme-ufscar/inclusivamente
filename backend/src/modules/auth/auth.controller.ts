@@ -50,8 +50,28 @@ export const register = async (req: Request, res: Response) => {
                         name,
                         email,
                         school_id,
+                        specialty: req.body.specialty || null,
                         user_id: user.id
                     }
+                });
+            }
+        }
+
+        // Se for um responsavel
+        if (userRole === 'parent') {
+            const guardian = await prisma.guardian.create({
+                data: {
+                    name,
+                    email,
+                    phone: req.body.phone || null,
+                    kinship_type_id: req.body.kinship_type_id || null,
+                }
+            });
+
+            if (req.body.student_id) {
+                await prisma.student.update({
+                    where: { id: req.body.student_id },
+                    data: { primary_guardian_id: guardian.id }
                 });
             }
         }

@@ -10,6 +10,7 @@ import checkinRoutes from './modules/checkins/checkins.routes';
 import bnccRoutes from './modules/bncc/bncc.routes';
 import subjectsRoutes from './modules/subjects/subjects.routes';
 import classesRoutes from './modules/classes/classes.routes';
+import guardiansRoutes from './modules/guardians/guardians.routes';
 
 const router = Router();
 
@@ -24,5 +25,6 @@ router.use('/checkins', checkinRoutes);
 router.use('/bncc', bnccRoutes);
 router.use('/subjects', subjectsRoutes);
 router.use('/classes', classesRoutes);
+router.use('/guardians', guardiansRoutes);
 
 export default router;
