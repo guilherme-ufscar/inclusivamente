@@ -144,3 +144,31 @@ export const getGlobalTutorHistory = async (req: Request, res: Response) => {
         return res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
+
+export const getGameSessionDetails = async (req: Request, res: Response) => {
+    try {
+        const { log_id } = req.params as any;
+        const log = await prisma.activityLog.findUnique({
+            where: { id: log_id },
+            include: { student: { select: { name: true } } }
+        });
+
+        if (!log) {
+            return res.status(404).json({ success: false, message: 'Activity session not found or invalid log_id.' });
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                log_id: log.id,
+                activity_id: log.activity_id,
+                student_name: log.student?.name || 'Aluno',
+                has_tutor: log.has_tutor,
+                started_at: log.started_at
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+};
