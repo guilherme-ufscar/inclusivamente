@@ -1,0 +1,5 @@
+﻿src/App.tsx(12,23): error TS2306: File 'C:/Users/Chyi Jaan Li/Desktop/inclusaogemini/frontend/src/pages/admin/Staff.tsx' is not a module.
+src/components/layout/AppLayout.tsx(34,12): error TS6133: 'showNotifications' is declared but its value is never read.
+src/components/layout/AppLayout.tsx(34,31): error TS6133: 'setShowNotifications' is declared but its value is never read.
+src/pages/admin/Chapters.tsx(7,16): error TS6133: 'Book' is declared but its value is never read.
+src/pages/admin/Chapters.tsx(7,46): error TS6133: 'ArrowRight' is declared but its value is never read.
