@@ -64,9 +64,18 @@ export default function ActivitiesPage() {
     const handleStartActivity = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await api.post('/activities/start', { ...startForm, student_id: selectedStudentId });
+            const res = await api.post('/activities/start', { ...startForm, student_id: selectedStudentId });
+            const novaAtividadeId = res.data.data.id;
+
             setIsStartModalOpen(false);
             fetchActivities();
+
+            // Aqui é onde passamos o ID para o jogo!
+            const gameUrl = `https://jogos.inclusivamenteeduca.com/jogar?log_id=${novaAtividadeId}`;
+
+            if (window.confirm(`Atividade registrada no sistema!\n\nO servidor gerou o seguinte log_id para esta sessão: \n${novaAtividadeId}\n\nÉ este ID que precisa ser passado para o jogo pela URL.\nDeseja simular a abertura do jogo (em nova aba) agora?`)) {
+                window.open(gameUrl, '_blank');
+            }
         } catch (err: any) {
             console.error('Erro detalhado:', err.response?.data);
             alert('Erro ao iniciar atividade: ' + (err.response?.data?.message || err.message));
