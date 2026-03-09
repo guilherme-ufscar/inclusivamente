@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../../common/middleware/auth';
+import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -95,20 +96,66 @@ export const getStudentById = async (req: AuthRequest, res: Response) => {
 
 export const createStudent = async (req: AuthRequest, res: Response) => {
     try {
-        const { name, birth_date, school_id, primary_guardian_id, grade_level, tutor_ids, class_id } = req.body;
+        const {
+            name, birth_date, school_id, grade_level, tutor_ids, class_id,
+            cpf, rg, diagnosis, needs_tutor,
+            student_email, student_password,
+            guardian_name, guardian_cpf, guardian_phone, guardian_address
+        } = req.body;
 
         if (!name || !birth_date || !school_id) {
             return res.status(400).json({ success: false, message: 'Name, Birth Date and School ID are required' });
         }
 
+        let newUserId: string | null = null;
+
+        // 1. Create User account if requested
+        if (student_email && student_password) {
+            const existingUser = await prisma.user.findUnique({ where: { email: student_email } });
+            if (existingUser) {
+                return res.status(400).json({ success: false, message: 'Email já está em uso para o login do aluno.' });
+            }
+            const password_hash = await bcrypt.hash(student_password, 10);
+            const newUser = await prisma.user.create({
+                data: {
+                    name,
+                    email: student_email,
+                    password_hash,
+                    role: 'student',
+                    school_id
+                }
+            });
+            newUserId = newUser.id;
+        }
+
+        // 2. Handle Guardian
+        let guardianId = req.body.primary_guardian_id || null;
+        if (!guardianId && guardian_name) {
+            const newGuardian = await prisma.guardian.create({
+                data: {
+                    name: guardian_name,
+                    cpf: guardian_cpf || null,
+                    phone: guardian_phone || null,
+                    address: guardian_address || null,
+                }
+            });
+            guardianId = newGuardian.id;
+        }
+
+        // 3. Create Student
         const student = await prisma.student.create({
             data: {
                 name,
                 birth_date: new Date(birth_date),
                 school_id,
-                primary_guardian_id: primary_guardian_id || null,
+                primary_guardian_id: guardianId,
                 grade_level: grade_level || null,
                 class_id: class_id || null,
+                cpf: cpf || null,
+                rg: rg || null,
+                diagnosis: diagnosis || null,
+                needs_tutor: needs_tutor === true || needs_tutor === 'true',
+                user_id: newUserId,
                 Tutors: tutor_ids && tutor_ids.length > 0 ? {
                     connect: tutor_ids.map((tid: string) => ({ id: tid }))
                 } : undefined
@@ -125,16 +172,45 @@ export const createStudent = async (req: AuthRequest, res: Response) => {
 export const updateStudent = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params as any;
-        const { name, birth_date, primary_guardian_id, grade_level, status, tutor_ids, class_id } = req.body;
+        const {
+            name, birth_date, primary_guardian_id, grade_level, status, tutor_ids, class_id,
+            cpf, rg, diagnosis, needs_tutor,
+            guardian_name, guardian_cpf, guardian_phone, guardian_address
+        } = req.body;
+
+        const currentStudent = await prisma.student.findUnique({ where: { id } });
+        if (!currentStudent) {
+            return res.status(404).json({ success: false, message: 'Student not found' });
+        }
+
+        // Handle Guardian Update/Creation during Student update
+        let guardianId = primary_guardian_id || currentStudent.primary_guardian_id;
+        if (guardian_name) {
+            if (guardianId) {
+                await prisma.guardian.update({
+                    where: { id: guardianId },
+                    data: { name: guardian_name, cpf: guardian_cpf, phone: guardian_phone, address: guardian_address }
+                });
+            } else {
+                const newGuardian = await prisma.guardian.create({
+                    data: { name: guardian_name, cpf: guardian_cpf, phone: guardian_phone, address: guardian_address }
+                });
+                guardianId = newGuardian.id;
+            }
+        }
 
         const student = await prisma.student.update({
             where: { id },
             data: {
                 name,
                 birth_date: birth_date ? new Date(birth_date) : undefined,
-                primary_guardian_id: primary_guardian_id || null,
+                primary_guardian_id: guardianId || null,
                 grade_level: grade_level || null,
                 class_id: class_id || null,
+                cpf: cpf !== undefined ? cpf : undefined,
+                rg: rg !== undefined ? rg : undefined,
+                diagnosis: diagnosis !== undefined ? diagnosis : undefined,
+                needs_tutor: needs_tutor !== undefined ? (needs_tutor === true || needs_tutor === 'true') : undefined,
                 status,
                 Tutors: tutor_ids ? {
                     set: tutor_ids.map((tid: string) => ({ id: tid }))

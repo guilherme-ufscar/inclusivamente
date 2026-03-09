@@ -14,10 +14,20 @@ interface Student {
     grade_level: string;
     school_id: string;
     class_id?: string;
+    cpf?: string;
+    rg?: string;
+    diagnosis?: string;
+    needs_tutor?: boolean;
     School?: { name: string };
     class?: { name: string };
     Tutors?: Array<{ id: string, name: string }>;
     Reports?: Array<{ tutor_recommendation: string }>;
+    guardian?: {
+        name: string;
+        cpf?: string;
+        phone?: string;
+        address?: string;
+    };
 }
 
 interface School {
@@ -53,7 +63,17 @@ export default function StudentsPage() {
         grade_level: '',
         school_id: '',
         class_id: '',
-        tutor_ids: [] as string[]
+        tutor_ids: [] as string[],
+        cpf: '',
+        rg: '',
+        diagnosis: '',
+        needs_tutor: false,
+        student_email: '',
+        student_password: '',
+        guardian_name: '',
+        guardian_cpf: '',
+        guardian_phone: '',
+        guardian_address: ''
     });
 
     const fetchData = async () => {
@@ -89,7 +109,17 @@ export default function StudentsPage() {
                 grade_level: student.grade_level || '',
                 school_id: student.school_id || '',
                 class_id: student.class_id || '',
-                tutor_ids: student.Tutors?.map(t => t.id) || []
+                tutor_ids: student.Tutors?.map(t => t.id) || [],
+                cpf: student.cpf || '',
+                rg: student.rg || '',
+                diagnosis: student.diagnosis || '',
+                needs_tutor: student.needs_tutor || false,
+                student_email: '', // Edit doesn't easily show/update email
+                student_password: '', // Edit doesn't easily show/update pass
+                guardian_name: student.guardian?.name || '',
+                guardian_cpf: student.guardian?.cpf || '',
+                guardian_phone: student.guardian?.phone || '',
+                guardian_address: student.guardian?.address || ''
             });
         } else {
             setEditingId(null);
@@ -99,7 +129,17 @@ export default function StudentsPage() {
                 grade_level: '',
                 school_id: schools[0]?.id || '',
                 class_id: '',
-                tutor_ids: []
+                tutor_ids: [],
+                cpf: '',
+                rg: '',
+                diagnosis: '',
+                needs_tutor: false,
+                student_email: '',
+                student_password: '',
+                guardian_name: '',
+                guardian_cpf: '',
+                guardian_phone: '',
+                guardian_address: ''
             });
         }
         setIsModalOpen(true);
@@ -283,93 +323,200 @@ export default function StudentsPage() {
                 onClose={handleCloseModal}
                 title={editingId ? 'Editar Aluno' : 'Novo Aluno'}
             >
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <Input
-                        label="Nome Completo do Aluno"
-                        required
-                        value={formData.name}
-                        onChange={e => setFormData({ ...formData, name: e.target.value })}
-                    />
+                <div className="max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+                    <form onSubmit={handleSubmit} className="space-y-6 pb-4">
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <Input
-                            label="Data de Nascimento"
-                            type="date"
-                            required
-                            value={formData.birth_date}
-                            onChange={e => setFormData({ ...formData, birth_date: e.target.value })}
-                        />
-                        <Input
-                            label="Série / Nível Escolar"
-                            placeholder="ex: 1º Ano EF"
-                            value={formData.grade_level}
-                            onChange={e => setFormData({ ...formData, grade_level: e.target.value })}
-                        />
-                    </div>
+                        {/* Seção: Dados do Aluno */}
+                        <div>
+                            <h3 className="text-lg font-bold text-slate-800 border-b border-slate-200 pb-2 mb-4">Dados do Aluno</h3>
+                            <div className="space-y-4">
+                                <Input
+                                    label="Nome Completo do Aluno"
+                                    required
+                                    value={formData.name}
+                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                />
 
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium text-slate-700">Escola Matrícula <span className="text-red-500">*</span></label>
-                        <select
-                            required
-                            className="flex h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-                            value={formData.school_id}
-                            onChange={e => setFormData({ ...formData, school_id: e.target.value })}
-                        >
-                            <option value="" disabled>Selecione a instituição de ensino</option>
-                            {schools.map(school => (
-                                <option key={school.id} value={school.id}>{school.name}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium text-slate-700">Turma (Opcional)</label>
-                        <select
-                            className="flex h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-                            value={formData.class_id}
-                            onChange={e => setFormData({ ...formData, class_id: e.target.value })}
-                        >
-                            <option value="">Nenhuma turma</option>
-                            {classes.filter(c => c.school_id === formData.school_id).map(c => (
-                                <option key={c.id} value={c.id}>{c.name}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium text-slate-700">Tutores Responsáveis</label>
-                        <div className="grid grid-cols-2 gap-2 p-3 border border-slate-200 rounded-xl bg-slate-50/50 max-h-32 overflow-y-auto">
-                            {tutors.filter(t => t.school_id === formData.school_id).map(tutor => (
-                                <label key={tutor.id} className="flex items-center gap-2 cursor-pointer hover:bg-white p-1 rounded-md transition-colors">
-                                    <input
-                                        type="checkbox"
-                                        className="rounded border-slate-300 text-brand-primary focus:ring-brand-primary"
-                                        checked={formData.tutor_ids.includes(tutor.id)}
-                                        onChange={(e) => {
-                                            const newIds = e.target.checked
-                                                ? [...formData.tutor_ids, tutor.id]
-                                                : formData.tutor_ids.filter(id => id !== tutor.id);
-                                            setFormData({ ...formData, tutor_ids: newIds });
-                                        }}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Input
+                                        label="Data de Nascimento"
+                                        type="date"
+                                        required
+                                        value={formData.birth_date}
+                                        onChange={e => setFormData({ ...formData, birth_date: e.target.value })}
                                     />
-                                    <span className="text-xs text-slate-700 truncate">{tutor.name}</span>
-                                </label>
-                            ))}
-                            {tutors.filter(t => t.school_id === formData.school_id).length === 0 && (
-                                <p className="text-[10px] text-slate-400 col-span-2 italic">Nenhum tutor cadastrado nesta escola.</p>
-                            )}
-                        </div>
-                    </div>
+                                    <Input
+                                        label="Série / Nível Escolar"
+                                        placeholder="ex: 1º Ano EF"
+                                        value={formData.grade_level}
+                                        onChange={e => setFormData({ ...formData, grade_level: e.target.value })}
+                                    />
+                                </div>
 
-                    <div className="pt-4 flex justify-end gap-3">
-                        <Button type="button" variant="ghost" onClick={handleCloseModal}>
-                            Cancelar
-                        </Button>
-                        <Button type="submit" disabled={!schools.length}>
-                            {editingId ? 'Salvar Alterações' : 'Cadastrar Aluno'}
-                        </Button>
-                    </div>
-                </form>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Input
+                                        label="CPF do Aluno"
+                                        placeholder="000.000.000-00"
+                                        value={formData.cpf}
+                                        onChange={e => setFormData({ ...formData, cpf: e.target.value })}
+                                    />
+                                    <Input
+                                        label="RG do Aluno"
+                                        placeholder="00.000.000-0"
+                                        value={formData.rg}
+                                        onChange={e => setFormData({ ...formData, rg: e.target.value })}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Input
+                                        label="Diagnóstico / Espectro"
+                                        placeholder="ex: TEA, TDAH, Dislexia"
+                                        value={formData.diagnosis}
+                                        onChange={e => setFormData({ ...formData, diagnosis: e.target.value })}
+                                    />
+                                    <div className="space-y-1 flex flex-col justify-end">
+                                        <label className="flex items-center gap-2 cursor-pointer p-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition h-11">
+                                            <input
+                                                type="checkbox"
+                                                className="w-4 h-4 text-brand-primary"
+                                                checked={formData.needs_tutor}
+                                                onChange={e => setFormData({ ...formData, needs_tutor: e.target.checked })}
+                                            />
+                                            <span className="text-sm font-medium text-slate-700">Necessita de Tutor Especializado</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Seção: Dados da Conta (Login do Jogo) */}
+                        {!editingId && (
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-800 border-b border-slate-200 pb-2 mb-4">Acesso ao Jogo / Painel</h3>
+                                <p className="text-xs text-slate-500 mb-3">Crie um login para o aluno acessar os minigames e as avaliações.</p>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Input
+                                        label="E-mail de Login do Aluno"
+                                        type="email"
+                                        placeholder="aluno@escola.com"
+                                        value={formData.student_email}
+                                        onChange={e => setFormData({ ...formData, student_email: e.target.value })}
+                                    />
+                                    <Input
+                                        label="Senha"
+                                        type="password"
+                                        placeholder="Mínimo 6 caracteres"
+                                        value={formData.student_password}
+                                        onChange={e => setFormData({ ...formData, student_password: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Seção: Dados Escolares */}
+                        <div>
+                            <h3 className="text-lg font-bold text-slate-800 border-b border-slate-200 pb-2 mb-4">Matrícula Escolar</h3>
+                            <div className="space-y-4">
+                                <div className="space-y-1">
+                                    <label className="text-sm font-medium text-slate-700">Escola Matrícula <span className="text-red-500">*</span></label>
+                                    <select
+                                        required
+                                        className="flex h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                                        value={formData.school_id}
+                                        onChange={e => setFormData({ ...formData, school_id: e.target.value })}
+                                    >
+                                        <option value="" disabled>Selecione a instituição de ensino</option>
+                                        {schools.map(school => (
+                                            <option key={school.id} value={school.id}>{school.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="text-sm font-medium text-slate-700">Turma (Opcional)</label>
+                                    <select
+                                        className="flex h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                                        value={formData.class_id}
+                                        onChange={e => setFormData({ ...formData, class_id: e.target.value })}
+                                    >
+                                        <option value="">Nenhuma turma</option>
+                                        {classes.filter(c => c.school_id === formData.school_id).map(c => (
+                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="text-sm font-medium text-slate-700">Tutores Responsáveis</label>
+                                    <div className="grid grid-cols-2 gap-2 p-3 border border-slate-200 rounded-xl bg-slate-50/50 max-h-32 overflow-y-auto">
+                                        {tutors.filter(t => t.school_id === formData.school_id).map(tutor => (
+                                            <label key={tutor.id} className="flex items-center gap-2 cursor-pointer hover:bg-white p-1 rounded-md transition-colors">
+                                                <input
+                                                    type="checkbox"
+                                                    className="rounded border-slate-300 text-brand-primary focus:ring-brand-primary"
+                                                    checked={formData.tutor_ids.includes(tutor.id)}
+                                                    onChange={(e) => {
+                                                        const newIds = e.target.checked
+                                                            ? [...formData.tutor_ids, tutor.id]
+                                                            : formData.tutor_ids.filter(id => id !== tutor.id);
+                                                        setFormData({ ...formData, tutor_ids: newIds });
+                                                    }}
+                                                />
+                                                <span className="text-xs text-slate-700 truncate">{tutor.name}</span>
+                                            </label>
+                                        ))}
+                                        {tutors.filter(t => t.school_id === formData.school_id).length === 0 && (
+                                            <p className="text-[10px] text-slate-400 col-span-2 italic">Nenhum tutor cadastrado nesta escola.</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Seção: Dados do Responsável (Guardião 360) */}
+                        <div>
+                            <h3 className="text-lg font-bold text-slate-800 border-b border-slate-200 pb-2 mb-4">Família / Responsável Legal</h3>
+                            <div className="space-y-4">
+                                <Input
+                                    label="Nome do Responsável"
+                                    placeholder="Nome da mãe, pai ou responsável legal"
+                                    value={formData.guardian_name}
+                                    onChange={e => setFormData({ ...formData, guardian_name: e.target.value })}
+                                />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Input
+                                        label="CPF do Responsável"
+                                        placeholder="000.000.000-00"
+                                        value={formData.guardian_cpf}
+                                        onChange={e => setFormData({ ...formData, guardian_cpf: e.target.value })}
+                                    />
+                                    <Input
+                                        label="Telefone (WhatsApp)"
+                                        placeholder="(00) 00000-0000"
+                                        value={formData.guardian_phone}
+                                        onChange={e => setFormData({ ...formData, guardian_phone: e.target.value })}
+                                    />
+                                </div>
+                                <Input
+                                    label="Endereço Completo"
+                                    placeholder="Rua, Número, Bairro, Cidade - UF"
+                                    value={formData.guardian_address}
+                                    onChange={e => setFormData({ ...formData, guardian_address: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="pt-6 mt-4 flex justify-end gap-3 sticky bottom-0 bg-white pb-2 border-t border-slate-100">
+                            <Button type="button" variant="ghost" onClick={handleCloseModal}>
+                                Cancelar
+                            </Button>
+                            <Button type="submit" disabled={!schools.length}>
+                                {editingId ? 'Salvar Alterações' : 'Cadastrar Aluno'}
+                            </Button>
+                        </div>
+                    </form>
+                </div>
             </Modal>
 
         </div>
