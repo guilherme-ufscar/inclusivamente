@@ -19,6 +19,9 @@ interface ActivityLog {
     has_tutor: boolean;
     autonomy_level: string | null;
     tutor_observations: string | null;
+    correct_count?: number;
+    errors_count?: number;
+    time_spent?: number;
 }
 
 export default function ActivitiesPage() {
@@ -151,7 +154,27 @@ export default function ActivitiesPage() {
                                         <h4 className="font-semibold text-slate-800">Atividade: {log.activity_id}</h4>
                                         <p className="text-xs text-slate-500">Iniciado em: {new Date(log.started_at).toLocaleString('pt-BR')}</p>
                                         {log.completed_at && (
-                                            <p className="text-xs text-emerald-600 mt-1">Concluído em: {new Date(log.completed_at).toLocaleString('pt-BR')}</p>
+                                            <>
+                                                <p className="text-xs text-emerald-600 mt-1">Concluído em: {new Date(log.completed_at).toLocaleString('pt-BR')}</p>
+                                                {/* Exibição dos dados do game/webhook */}
+                                                <div className="flex gap-3 mt-2 mb-1 text-xs">
+                                                    {log.correct_count !== undefined && (
+                                                        <span className="bg-emerald-50 text-emerald-700 px-2 py-1 rounded-md border border-emerald-100">
+                                                            Acertos: font-bold {log.correct_count}
+                                                        </span>
+                                                    )}
+                                                    {log.errors_count !== undefined && (
+                                                        <span className="bg-red-50 text-red-700 px-2 py-1 rounded-md border border-red-100">
+                                                            Erros: font-bold {log.errors_count}
+                                                        </span>
+                                                    )}
+                                                    {log.time_spent !== undefined && (
+                                                        <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-md border border-slate-200">
+                                                            Tempo: {log.time_spent}s
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </>
                                         )}
                                         {log.tutor_observations && (
                                             <p className="text-sm mt-2 text-slate-600 italic border-l-2 border-brand-accent pl-2">
