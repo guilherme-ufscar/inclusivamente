@@ -160,12 +160,12 @@ export default function ActivitiesPage() {
                                                 <div className="flex gap-3 mt-2 mb-1 text-xs">
                                                     {log.correct_count !== undefined && (
                                                         <span className="bg-emerald-50 text-emerald-700 px-2 py-1 rounded-md border border-emerald-100">
-                                                            Acertos: font-bold {log.correct_count}
+                                                            Acertos: <strong className="font-bold">{log.correct_count}</strong>
                                                         </span>
                                                     )}
                                                     {log.errors_count !== undefined && (
                                                         <span className="bg-red-50 text-red-700 px-2 py-1 rounded-md border border-red-100">
-                                                            Erros: font-bold {log.errors_count}
+                                                            Erros: <strong className="font-bold">{log.errors_count}</strong>
                                                         </span>
                                                     )}
                                                     {log.time_spent !== undefined && (
