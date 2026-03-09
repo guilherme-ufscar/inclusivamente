@@ -4,7 +4,7 @@ import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
 import Input from '../../components/ui/Input';
 import api from '../../services/api';
-import { Plus, Book, Layers, Pencil, Trash2, ArrowRight } from 'lucide-react';
+import { Plus, Layers, Pencil, Trash2 } from 'lucide-react';
 
 interface Subject {
     id: string;

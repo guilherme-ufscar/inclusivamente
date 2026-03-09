@@ -16,7 +16,7 @@ interface Student {
     class_id?: string;
     cpf?: string;
     rg?: string;
-    diagnosis?: string;
+    persona?: number;
     needs_tutor?: boolean;
     School?: { name: string };
     class?: { name: string };
@@ -24,6 +24,7 @@ interface Student {
     Reports?: Array<{ tutor_recommendation: string }>;
     guardian?: {
         name: string;
+        email?: string;
         cpf?: string;
         phone?: string;
         address?: string;
@@ -47,6 +48,29 @@ interface Tutor {
     school_id: string;
 }
 
+const maskCPF = (v: string) => {
+    return v.replace(/\D/g, '')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+        .replace(/(-\d{2})\d+?$/, '$1');
+};
+
+const maskRG = (v: string) => {
+    return v.replace(/\D/g, '')
+        .replace(/(\d{2})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+        .replace(/(-\d{1})\d+?$/, '$1');
+};
+
+const maskPhone = (v: string) => {
+    return v.replace(/\D/g, '')
+        .replace(/(\d{2})(\d)/, '($1) $2')
+        .replace(/(\d{4,5})(\d)/, '$1-$2')
+        .replace(/(-\d{4})\d+?$/, '$1');
+};
+
 export default function StudentsPage() {
     const [students, setStudents] = useState<Student[]>([]);
     const [schools, setSchools] = useState<School[]>([]);
@@ -66,11 +90,13 @@ export default function StudentsPage() {
         tutor_ids: [] as string[],
         cpf: '',
         rg: '',
-        diagnosis: '',
+        persona: 0,
         needs_tutor: false,
         student_email: '',
         student_password: '',
         guardian_name: '',
+        guardian_email: '',
+        guardian_password: '',
         guardian_cpf: '',
         guardian_phone: '',
         guardian_address: ''
@@ -112,11 +138,13 @@ export default function StudentsPage() {
                 tutor_ids: student.Tutors?.map(t => t.id) || [],
                 cpf: student.cpf || '',
                 rg: student.rg || '',
-                diagnosis: student.diagnosis || '',
+                persona: student.persona || 0,
                 needs_tutor: student.needs_tutor || false,
                 student_email: '', // Edit doesn't easily show/update email
                 student_password: '', // Edit doesn't easily show/update pass
                 guardian_name: student.guardian?.name || '',
+                guardian_email: student.guardian?.email || '',
+                guardian_password: '',
                 guardian_cpf: student.guardian?.cpf || '',
                 guardian_phone: student.guardian?.phone || '',
                 guardian_address: student.guardian?.address || ''
@@ -132,11 +160,13 @@ export default function StudentsPage() {
                 tutor_ids: [],
                 cpf: '',
                 rg: '',
-                diagnosis: '',
+                persona: 0,
                 needs_tutor: false,
                 student_email: '',
                 student_password: '',
                 guardian_name: '',
+                guardian_email: '',
+                guardian_password: '',
                 guardian_cpf: '',
                 guardian_phone: '',
                 guardian_address: ''
@@ -322,6 +352,7 @@ export default function StudentsPage() {
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
                 title={editingId ? 'Editar Aluno' : 'Novo Aluno'}
+                size="2xl"
             >
                 <div className="max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
                     <form onSubmit={handleSubmit} className="space-y-6 pb-4">
@@ -346,8 +377,11 @@ export default function StudentsPage() {
                                         onChange={e => setFormData({ ...formData, birth_date: e.target.value })}
                                     />
                                     <Input
-                                        label="Série / Nível Escolar"
-                                        placeholder="ex: 1º Ano EF"
+                                        label="Série (Ano Numérico)"
+                                        type="number"
+                                        min="1"
+                                        max="12"
+                                        placeholder="ex: 1 (Para 1º Ano)"
                                         value={formData.grade_level}
                                         onChange={e => setFormData({ ...formData, grade_level: e.target.value })}
                                     />
@@ -358,23 +392,30 @@ export default function StudentsPage() {
                                         label="CPF do Aluno"
                                         placeholder="000.000.000-00"
                                         value={formData.cpf}
-                                        onChange={e => setFormData({ ...formData, cpf: e.target.value })}
+                                        onChange={e => setFormData({ ...formData, cpf: maskCPF(e.target.value) })}
                                     />
                                     <Input
                                         label="RG do Aluno"
                                         placeholder="00.000.000-0"
                                         value={formData.rg}
-                                        onChange={e => setFormData({ ...formData, rg: e.target.value })}
+                                        onChange={e => setFormData({ ...formData, rg: maskRG(e.target.value) })}
                                     />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
-                                    <Input
-                                        label="Diagnóstico / Espectro"
-                                        placeholder="ex: TEA, TDAH, Dislexia"
-                                        value={formData.diagnosis}
-                                        onChange={e => setFormData({ ...formData, diagnosis: e.target.value })}
-                                    />
+                                    <div className="space-y-1">
+                                        <label className="text-sm font-medium text-slate-700">Diagnóstico / Espectro (Sondagem)</label>
+                                        <select
+                                            className="flex h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                                            value={formData.persona}
+                                            onChange={e => setFormData({ ...formData, persona: Number(e.target.value) })}
+                                        >
+                                            <option value={0}>0 - Default (Sem diagnóstico restrito)</option>
+                                            <option value={1}>1 - TEA</option>
+                                            <option value={2}>2 - TEA + DI</option>
+                                            <option value={3}>3 - DI + TEA</option>
+                                        </select>
+                                    </div>
                                     <div className="space-y-1 flex flex-col justify-end">
                                         <label className="flex items-center gap-2 cursor-pointer p-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition h-11">
                                             <input
@@ -477,9 +518,33 @@ export default function StudentsPage() {
                         {/* Seção: Dados do Responsável (Guardião 360) */}
                         <div>
                             <h3 className="text-lg font-bold text-slate-800 border-b border-slate-200 pb-2 mb-4">Família / Responsável Legal</h3>
+
+                            {!editingId && (
+                                <div className="bg-blue-50/50 border border-blue-100 p-4 rounded-xl mb-4">
+                                    <p className="text-sm text-blue-800 mb-3 font-medium">Conta do Responsável (App Família 360)</p>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <Input
+                                            label="E-mail de Login do Responsável"
+                                            type="email"
+                                            placeholder="paioumae@email.com"
+                                            value={formData.guardian_email}
+                                            onChange={e => setFormData({ ...formData, guardian_email: e.target.value })}
+                                        />
+                                        <Input
+                                            label="Senha (Responsável)"
+                                            type="password"
+                                            placeholder="Senha de acesso"
+                                            value={formData.guardian_password}
+                                            onChange={e => setFormData({ ...formData, guardian_password: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="space-y-4">
                                 <Input
-                                    label="Nome do Responsável"
+                                    label="Nome Completo do Responsável"
+                                    required={!!formData.guardian_email}
                                     placeholder="Nome da mãe, pai ou responsável legal"
                                     value={formData.guardian_name}
                                     onChange={e => setFormData({ ...formData, guardian_name: e.target.value })}
@@ -489,13 +554,13 @@ export default function StudentsPage() {
                                         label="CPF do Responsável"
                                         placeholder="000.000.000-00"
                                         value={formData.guardian_cpf}
-                                        onChange={e => setFormData({ ...formData, guardian_cpf: e.target.value })}
+                                        onChange={e => setFormData({ ...formData, guardian_cpf: maskCPF(e.target.value) })}
                                     />
                                     <Input
                                         label="Telefone (WhatsApp)"
                                         placeholder="(00) 00000-0000"
                                         value={formData.guardian_phone}
-                                        onChange={e => setFormData({ ...formData, guardian_phone: e.target.value })}
+                                        onChange={e => setFormData({ ...formData, guardian_phone: maskPhone(e.target.value) })}
                                     />
                                 </div>
                                 <Input

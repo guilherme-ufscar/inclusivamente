@@ -98,9 +98,9 @@ export const createStudent = async (req: AuthRequest, res: Response) => {
     try {
         const {
             name, birth_date, school_id, grade_level, tutor_ids, class_id,
-            cpf, rg, diagnosis, needs_tutor,
+            cpf, rg, persona, needs_tutor,
             student_email, student_password,
-            guardian_name, guardian_cpf, guardian_phone, guardian_address
+            guardian_name, guardian_email, guardian_password, guardian_cpf, guardian_phone, guardian_address
         } = req.body;
 
         if (!name || !birth_date || !school_id) {
@@ -131,9 +131,28 @@ export const createStudent = async (req: AuthRequest, res: Response) => {
         // 2. Handle Guardian
         let guardianId = req.body.primary_guardian_id || null;
         if (!guardianId && guardian_name) {
+            // Verificar e criar login de pai se email e senha forem fornecidos
+            if (guardian_email && guardian_password) {
+                const existingParent = await prisma.user.findUnique({ where: { email: guardian_email } });
+                if (existingParent) {
+                    return res.status(400).json({ success: false, message: 'Email já está em uso para o login do responsável.' });
+                }
+                const password_hash = await bcrypt.hash(guardian_password, 10);
+                await prisma.user.create({
+                    data: {
+                        name: guardian_name,
+                        email: guardian_email,
+                        password_hash,
+                        role: 'parent',
+                        school_id
+                    }
+                });
+            }
+
             const newGuardian = await prisma.guardian.create({
                 data: {
                     name: guardian_name,
+                    email: guardian_email || null,
                     cpf: guardian_cpf || null,
                     phone: guardian_phone || null,
                     address: guardian_address || null,
@@ -153,7 +172,7 @@ export const createStudent = async (req: AuthRequest, res: Response) => {
                 class_id: class_id || null,
                 cpf: cpf || null,
                 rg: rg || null,
-                diagnosis: diagnosis || null,
+                persona: persona !== undefined ? Number(persona) : 0,
                 needs_tutor: needs_tutor === true || needs_tutor === 'true',
                 user_id: newUserId,
                 Tutors: tutor_ids && tutor_ids.length > 0 ? {
@@ -174,8 +193,8 @@ export const updateStudent = async (req: AuthRequest, res: Response) => {
         const { id } = req.params as any;
         const {
             name, birth_date, primary_guardian_id, grade_level, status, tutor_ids, class_id,
-            cpf, rg, diagnosis, needs_tutor,
-            guardian_name, guardian_cpf, guardian_phone, guardian_address
+            cpf, rg, persona, needs_tutor,
+            guardian_name, guardian_email, guardian_cpf, guardian_phone, guardian_address
         } = req.body;
 
         const currentStudent = await prisma.student.findUnique({ where: { id } });
@@ -189,11 +208,11 @@ export const updateStudent = async (req: AuthRequest, res: Response) => {
             if (guardianId) {
                 await prisma.guardian.update({
                     where: { id: guardianId },
-                    data: { name: guardian_name, cpf: guardian_cpf, phone: guardian_phone, address: guardian_address }
+                    data: { name: guardian_name, email: guardian_email || null, cpf: guardian_cpf, phone: guardian_phone, address: guardian_address }
                 });
             } else {
                 const newGuardian = await prisma.guardian.create({
-                    data: { name: guardian_name, cpf: guardian_cpf, phone: guardian_phone, address: guardian_address }
+                    data: { name: guardian_name, email: guardian_email || null, cpf: guardian_cpf, phone: guardian_phone, address: guardian_address }
                 });
                 guardianId = newGuardian.id;
             }
@@ -209,7 +228,7 @@ export const updateStudent = async (req: AuthRequest, res: Response) => {
                 class_id: class_id || null,
                 cpf: cpf !== undefined ? cpf : undefined,
                 rg: rg !== undefined ? rg : undefined,
-                diagnosis: diagnosis !== undefined ? diagnosis : undefined,
+                persona: persona !== undefined ? Number(persona) : undefined,
                 needs_tutor: needs_tutor !== undefined ? (needs_tutor === true || needs_tutor === 'true') : undefined,
                 status,
                 Tutors: tutor_ids ? {

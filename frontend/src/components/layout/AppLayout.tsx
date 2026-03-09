@@ -31,7 +31,7 @@ export default function AppLayout({ children }: LayoutProps) {
     const navigate = useNavigate();
     const location = useLocation();
     const [isSidebarOpen, setSidebarOpen] = useState(true);
-    const [showNotifications, setShowNotifications] = useState(false);
+
 
     const handleLogout = () => {
         logout();
