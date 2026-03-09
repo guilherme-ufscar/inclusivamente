@@ -16,6 +16,7 @@ interface Report {
     summary_text: string;
     tutor_observations?: string;
     Student?: { name: string };
+    student?: { name: string };
 }
 
 interface Student {
@@ -126,7 +127,7 @@ export default function ReportsPage() {
         printWindow.document.write(`
           <html>
             <head>
-              <title>Parecer Analítico - ${report.Student?.name}</title>
+              <title>Parecer Analítico - ${report.student?.name || report.Student?.name || 'Aluno'}</title>
               <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
               <style>
                 * { box-sizing: border-box; }
@@ -272,7 +273,7 @@ export default function ReportsPage() {
                   <div class="dashboard-grid">
                       <div class="stat-card">
                           <div class="stat-label">Aluno Avaliado</div>
-                          <div class="stat-value" style="color: #3b82f6;">${report.Student?.name || 'Não Informado'}</div>
+                          <div class="stat-value" style="color: #3b82f6;">${report.student?.name || report.Student?.name || 'Não Informado'}</div>
                       </div>
                       <div class="stat-card">
                           <div class="stat-label">Período de Análise</div>
@@ -354,7 +355,7 @@ export default function ReportsPage() {
                                 <div>
                                     <CardTitle className="text-xl text-slate-800 flex items-center gap-2">
                                         <FileText className="w-5 h-5 text-brand-primary" />
-                                        Parecer de Desenvolvimento: {report.Student?.name || 'Aluno Desconhecido'}
+                                        Parecer de Desenvolvimento: {report.student?.name || report.Student?.name || 'Aluno Desconhecido'}
                                     </CardTitle>
                                     <p className="text-sm text-slate-500 mt-1">Período: {new Date(report.period_start).toLocaleDateString()} a {new Date(report.period_end).toLocaleDateString()}</p>
                                 </div>
