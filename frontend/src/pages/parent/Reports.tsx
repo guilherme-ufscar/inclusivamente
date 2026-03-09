@@ -10,6 +10,7 @@ interface Report {
     summary_text: string;
     tutor_recommendation: string;
     generated_at: string;
+    student_name?: string;
 }
 
 export default function FamilyReportsPage() {
@@ -19,7 +20,7 @@ export default function FamilyReportsPage() {
     useEffect(() => {
         const fetchReports = async () => {
             try {
-                const res = await api.get('/reports');
+                const res = await api.get('/guardians/me/reports');
                 setReports(res.data.data || []);
             } catch (err) {
                 console.error('Failed to fetch reports', err);
@@ -54,7 +55,7 @@ export default function FamilyReportsPage() {
                                     </div>
                                     <div>
                                         <CardTitle className="text-base">Relatório Mensal - {new Date(report.generated_at).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</CardTitle>
-                                        <p className="text-xs text-slate-400">Gerado em {new Date(report.generated_at).toLocaleDateString('pt-BR')}</p>
+                                        <p className="text-xs text-slate-400">Aluno: <strong className="font-semibold">{report.student_name}</strong> | Gerado em {new Date(report.generated_at).toLocaleDateString('pt-BR')}</p>
                                     </div>
                                 </div>
                                 <button className="flex items-center gap-2 text-brand-primary text-sm font-semibold hover:underline">

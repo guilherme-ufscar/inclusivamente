@@ -1,14 +1,12 @@
 import { Router } from 'express';
-// import { getGuardians, getGuardianById, createGuardian, updateGuardian } from './guardians.controller';
+import { getGuardianDashboard, getGuardianReports } from './guardians.controller';
 import { authenticate, authorize } from '../../common/middleware/auth';
 
 const router = Router();
 
 router.use(authenticate);
 
-// router.get('/', authorize(['admin', 'school']), getGuardians);
-// router.get('/:id', authorize(['admin', 'school']), getGuardianById);
-// router.post('/', authorize(['admin', 'school']), createGuardian);
-// router.put('/:id', authorize(['admin', 'school']), updateGuardian);
+router.get('/me/dashboard', authorize(['parent']), getGuardianDashboard);
+router.get('/me/reports', authorize(['parent']), getGuardianReports);
 
 export default router;

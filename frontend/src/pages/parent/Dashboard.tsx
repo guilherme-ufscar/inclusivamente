@@ -10,18 +10,23 @@ export default function ParentDashboard() {
         autonomyTrend: 'Estável'
     });
 
+    const [isLoading, setIsLoading] = useState(true);
+    const [students, setStudents] = useState<any[]>([]);
+    const [timeline, setTimeline] = useState<any[]>([]);
+
     useEffect(() => {
         const fetchParentData = async () => {
             try {
-                // In a real scenario, we would filter by the student(s) linked to this parent
-                const reportsRes = await api.get('/reports');
-                setStats({
-                    totalActivities: 12,
-                    lastReportDate: reportsRes.data.data?.[0]?.generated_at ? new Date(reportsRes.data.data[0].generated_at).toLocaleDateString('pt-BR') : 'Não disponível',
-                    autonomyTrend: 'Em Crescimento'
-                });
+                const res = await api.get('/guardians/me/dashboard');
+                if (res.data.success) {
+                    setStats(res.data.data.stats);
+                    setStudents(res.data.data.students);
+                    setTimeline(res.data.data.timeline);
+                }
             } catch (error) {
                 console.error('Failed to load parent data', error);
+            } finally {
+                setIsLoading(false);
             }
         };
         fetchParentData();
@@ -36,7 +41,7 @@ export default function ParentDashboard() {
                     </div>
                     <div>
                         <h1 className="text-3xl font-heading font-bold text-slate-900 tracking-tight">Painel da Família</h1>
-                        <p className="text-slate-500 mt-1">Acompanhe de perto a evolução e o bem-estar do seu filho.</p>
+                        <p className="text-slate-500 mt-1">Acompanhe de perto a evolução e o bem-estar {students.length > 0 ? `de ${students.map(s => s.name.split(' ')[0]).join(', ')}` : 'do seu filho'}.</p>
                     </div>
                 </div>
             </div>
@@ -90,9 +95,26 @@ export default function ParentDashboard() {
                     <CardTitle>Linha do Tempo de Evolução</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="p-12 text-center text-slate-400 border-2 border-dashed border-slate-100 rounded-2xl">
-                        Gráfico de progresso pedagógico e socioemocional será exibido aqui.
-                    </div>
+                    {isLoading ? (
+                        <div className="p-8 text-center text-slate-400">Carregando dados...</div>
+                    ) : timeline.length === 0 ? (
+                        <div className="p-12 text-center text-slate-400 border-2 border-dashed border-slate-100 rounded-2xl">
+                            Nenhuma atividade ou relatório foi registrado ainda.
+                        </div>
+                    ) : (
+                        <div className="relative border-l-2 border-brand-primary/20 ml-3 space-y-6 pb-4">
+                            {timeline.map((item, idx) => (
+                                <div key={`${item.id}-${idx}`} className="relative pl-6">
+                                    <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-white ${item.type === 'report' ? 'bg-blue-500' : 'bg-brand-primary'}`} />
+                                    <div>
+                                        <p className="text-sm font-semibold text-slate-800">{item.title}</p>
+                                        <p className="text-xs text-slate-500 mt-0.5">{new Date(item.date).toLocaleString('pt-BR')}</p>
+                                        <p className="text-sm text-slate-600 mt-2 bg-slate-50 p-3 rounded-lg border border-slate-100">{item.details}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         </div>
