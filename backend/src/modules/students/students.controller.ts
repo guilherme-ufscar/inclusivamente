@@ -131,28 +131,9 @@ export const createStudent = async (req: AuthRequest, res: Response) => {
         // 2. Handle Guardian
         let guardianId = req.body.primary_guardian_id || null;
         if (!guardianId && guardian_name) {
-            // Verificar e criar login de pai se email e senha forem fornecidos
-            if (guardian_email && guardian_password) {
-                const existingParent = await prisma.user.findUnique({ where: { email: guardian_email } });
-                if (existingParent) {
-                    return res.status(400).json({ success: false, message: 'Email já está em uso para o login do responsável.' });
-                }
-                const password_hash = await bcrypt.hash(guardian_password, 10);
-                await prisma.user.create({
-                    data: {
-                        name: guardian_name,
-                        email: guardian_email,
-                        password_hash,
-                        role: 'parent',
-                        school_id
-                    }
-                });
-            }
-
             const newGuardian = await prisma.guardian.create({
                 data: {
                     name: guardian_name,
-                    email: guardian_email || null,
                     cpf: guardian_cpf || null,
                     phone: guardian_phone || null,
                     address: guardian_address || null,
@@ -194,7 +175,7 @@ export const updateStudent = async (req: AuthRequest, res: Response) => {
         const {
             name, birth_date, primary_guardian_id, grade_level, status, tutor_ids, class_id,
             cpf, rg, persona, needs_tutor,
-            guardian_name, guardian_email, guardian_cpf, guardian_phone, guardian_address
+            guardian_name, guardian_cpf, guardian_phone, guardian_address
         } = req.body;
 
         const currentStudent = await prisma.student.findUnique({ where: { id } });
@@ -208,11 +189,11 @@ export const updateStudent = async (req: AuthRequest, res: Response) => {
             if (guardianId) {
                 await prisma.guardian.update({
                     where: { id: guardianId },
-                    data: { name: guardian_name, email: guardian_email || null, cpf: guardian_cpf, phone: guardian_phone, address: guardian_address }
+                    data: { name: guardian_name, cpf: guardian_cpf, phone: guardian_phone, address: guardian_address }
                 });
             } else {
                 const newGuardian = await prisma.guardian.create({
-                    data: { name: guardian_name, email: guardian_email || null, cpf: guardian_cpf, phone: guardian_phone, address: guardian_address }
+                    data: { name: guardian_name, cpf: guardian_cpf, phone: guardian_phone, address: guardian_address }
                 });
                 guardianId = newGuardian.id;
             }
@@ -260,6 +241,37 @@ export const updateMyProgression = async (req: AuthRequest, res: Response) => {
         return res.status(200).json({ success: true, data: student, message: 'Progression updated successfully' });
     } catch (error) {
         console.error(error);
+        return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+};
+
+export const deleteStudent = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params as { id: string };
+        const student = await prisma.student.findUnique({ where: { id } });
+
+        if (!student) {
+            return res.status(404).json({ success: false, message: 'Student not found' });
+        }
+
+        // Removendo dependências
+        await prisma.activityLog.deleteMany({ where: { student_id: id } });
+        await prisma.anamnesisResponse.deleteMany({ where: { student_id: id } });
+        await prisma.cognitiveProfile.deleteMany({ where: { student_id: id } });
+        await prisma.report.deleteMany({ where: { student_id: id } });
+        await prisma.familyCheckin.deleteMany({ where: { student_id: id } });
+
+        // Deletar o estudante
+        await prisma.student.delete({ where: { id } });
+
+        // Remover o 'user' associado, se existir
+        if (student.user_id) {
+            await prisma.user.delete({ where: { id: student.user_id } });
+        }
+
+        return res.status(200).json({ success: true, message: 'Student deleted successfully' });
+    } catch (error) {
+        console.error("Erro ao deletar aluno:", error);
         return res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getStudents, getStudentById, createStudent, updateStudent, updateMyProgression } from './students.controller';
+import { getStudents, getStudentById, createStudent, updateStudent, updateMyProgression, deleteStudent } from './students.controller';
 import { getStudentAnamnesis, createStudentAnamnesisResponse, updateStudentAnamnesisResponse } from '../anamnesis/anamnesis.controller';
 import { authenticate, authorize } from '../../common/middleware/auth';
 
@@ -12,6 +12,7 @@ router.patch('/me/progression', updateMyProgression);
 router.get('/:id', getStudentById);
 router.post('/', authorize(['admin', 'school']), createStudent);
 router.put('/:id', authorize(['admin', 'school']), updateStudent);
+router.delete('/:id', authorize(['admin', 'school']), deleteStudent);
 
 // Nested Anamnesis Routes
 router.get('/:id/anamnesis', getStudentAnamnesis);

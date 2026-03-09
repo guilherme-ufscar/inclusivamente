@@ -24,7 +24,6 @@ interface Student {
     Reports?: Array<{ tutor_recommendation: string }>;
     guardian?: {
         name: string;
-        email?: string;
         cpf?: string;
         phone?: string;
         address?: string;
@@ -54,6 +53,10 @@ const maskCPF = (v: string) => {
         .replace(/(\d{3})(\d)/, '$1.$2')
         .replace(/(\d{3})(\d{1,2})/, '$1-$2')
         .replace(/(-\d{2})\d+?$/, '$1');
+};
+
+const maskCEP = (v: string) => {
+    return v.replace(/\D/g, '').replace(/(\d{5})(\d)/, '$1-$2').substring(0, 9);
 };
 
 const maskRG = (v: string) => {
@@ -95,12 +98,29 @@ export default function StudentsPage() {
         student_email: '',
         student_password: '',
         guardian_name: '',
-        guardian_email: '',
-        guardian_password: '',
+        guardian_cep: '',
         guardian_cpf: '',
         guardian_phone: '',
         guardian_address: ''
     });
+
+    const handleCepBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+        const cep = e.target.value.replace(/\D/g, '');
+        if (cep.length === 8) {
+            try {
+                const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                const data = await res.json();
+                if (!data.erro) {
+                    setFormData(prev => ({
+                        ...prev,
+                        guardian_address: `${data.logradouro}, Número, ${data.bairro}, ${data.localidade} - ${data.uf}`
+                    }));
+                }
+            } catch (err) {
+                console.error("Erro ao buscar CEP", err);
+            }
+        }
+    };
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -143,8 +163,7 @@ export default function StudentsPage() {
                 student_email: '', // Edit doesn't easily show/update email
                 student_password: '', // Edit doesn't easily show/update pass
                 guardian_name: student.guardian?.name || '',
-                guardian_email: student.guardian?.email || '',
-                guardian_password: '',
+                guardian_cep: '',
                 guardian_cpf: student.guardian?.cpf || '',
                 guardian_phone: student.guardian?.phone || '',
                 guardian_address: student.guardian?.address || ''
@@ -165,8 +184,7 @@ export default function StudentsPage() {
                 student_email: '',
                 student_password: '',
                 guardian_name: '',
-                guardian_email: '',
-                guardian_password: '',
+                guardian_cep: '',
                 guardian_cpf: '',
                 guardian_phone: '',
                 guardian_address: ''
@@ -352,9 +370,9 @@ export default function StudentsPage() {
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
                 title={editingId ? 'Editar Aluno' : 'Novo Aluno'}
-                size="2xl"
+                size="4xl"
             >
-                <div className="max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+                <div className="max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar">
                     <form onSubmit={handleSubmit} className="space-y-6 pb-4">
 
                         {/* Seção: Dados do Aluno */}
@@ -519,37 +537,14 @@ export default function StudentsPage() {
                         <div>
                             <h3 className="text-lg font-bold text-slate-800 border-b border-slate-200 pb-2 mb-4">Família / Responsável Legal</h3>
 
-                            {!editingId && (
-                                <div className="bg-blue-50/50 border border-blue-100 p-4 rounded-xl mb-4">
-                                    <p className="text-sm text-blue-800 mb-3 font-medium">Conta do Responsável (App Família 360)</p>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <Input
-                                            label="E-mail de Login do Responsável"
-                                            type="email"
-                                            placeholder="paioumae@email.com"
-                                            value={formData.guardian_email}
-                                            onChange={e => setFormData({ ...formData, guardian_email: e.target.value })}
-                                        />
-                                        <Input
-                                            label="Senha (Responsável)"
-                                            type="password"
-                                            placeholder="Senha de acesso"
-                                            value={formData.guardian_password}
-                                            onChange={e => setFormData({ ...formData, guardian_password: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-
                             <div className="space-y-4">
                                 <Input
                                     label="Nome Completo do Responsável"
-                                    required={!!formData.guardian_email}
                                     placeholder="Nome da mãe, pai ou responsável legal"
                                     value={formData.guardian_name}
                                     onChange={e => setFormData({ ...formData, guardian_name: e.target.value })}
                                 />
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                                     <Input
                                         label="CPF do Responsável"
                                         placeholder="000.000.000-00"
@@ -562,6 +557,17 @@ export default function StudentsPage() {
                                         value={formData.guardian_phone}
                                         onChange={e => setFormData({ ...formData, guardian_phone: maskPhone(e.target.value) })}
                                     />
+                                    <div className="space-y-1">
+                                        <label className="text-sm font-medium text-slate-700">CEP</label>
+                                        <input
+                                            type="text"
+                                            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                                            placeholder="00000-000"
+                                            value={formData.guardian_cep}
+                                            onChange={e => setFormData({ ...formData, guardian_cep: maskCEP(e.target.value) })}
+                                            onBlur={handleCepBlur}
+                                        />
+                                    </div>
                                 </div>
                                 <Input
                                     label="Endereço Completo"
