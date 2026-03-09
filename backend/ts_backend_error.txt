@@ -1,0 +1,2 @@
+﻿src/modules/reports/reports.controller.ts(3,36): error TS2307: Cannot find module '@google/generative-ai' or its corresponding type declarations.
+src/routes.ts(13,29): error TS2306: File 'C:/Users/Chyi Jaan Li/Desktop/inclusaogemini/backend/src/modules/guardians/guardians.routes.ts' is not a module.
