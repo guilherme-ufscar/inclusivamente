@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { startActivity, finishActivity, submitTutorFeedback, getActivityLogById, getGlobalTutorHistory, getGameSessionDetails } from './activities.controller';
+import { startActivity, finishActivity, submitTutorFeedback, getActivityLogById, getGlobalTutorHistory, getGameSessionDetails, markActivityAsCompleted, getCompletedActivities } from './activities.controller';
 import { handleGamesWebhook } from './activities.webhook';
 import { authenticate } from '../../common/middleware/auth';
 
@@ -8,6 +8,8 @@ const router = Router();
 // Public Endpoints for Games (No JWT required)
 router.post('/webhook', handleGamesWebhook);
 router.get('/session/:log_id', getGameSessionDetails);
+router.post('/completed', markActivityAsCompleted);
+router.get('/completed/:student_id', getCompletedActivities);
 
 router.use(authenticate);
 

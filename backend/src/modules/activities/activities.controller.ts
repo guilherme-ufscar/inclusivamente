@@ -198,3 +198,61 @@ export const getGameSessionDetails = async (req: Request, res: Response) => {
         return res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
+
+export const markActivityAsCompleted = async (req: Request, res: Response) => {
+    try {
+        let { student_id, studentId, activity_id, activityId } = req.body;
+
+        student_id = student_id || studentId;
+        activity_id = activity_id || activityId;
+
+        if (!student_id || !activity_id) {
+            return res.status(400).json({ success: false, message: 'Student ID and Activity ID are required' });
+        }
+
+        // Verifica se já existe para não duplicar (caso faça mais de 2 vezes, contabiliza só 1)
+        const existing = await prisma.completedGameActivity.findUnique({
+            where: {
+                student_id_activity_id: { student_id, activity_id }
+            }
+        });
+
+        if (existing) {
+            return res.status(200).json({ success: true, message: 'Activity already marked as completed', data: existing });
+        }
+
+        const completed = await prisma.completedGameActivity.create({
+            data: {
+                student_id,
+                activity_id
+            }
+        });
+
+        return res.status(201).json({ success: true, data: completed, message: 'Activity marked as completed successfully' });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+};
+
+export const getCompletedActivities = async (req: Request, res: Response) => {
+    try {
+        const { student_id } = req.params as any;
+
+        if (!student_id) {
+            return res.status(400).json({ success: false, message: 'Student ID is required' });
+        }
+
+        const completed = await prisma.completedGameActivity.findMany({
+            where: { student_id },
+            select: { activity_id: true, completed_at: true }
+        });
+
+        const activities = completed.map((c: any) => c.activity_id);
+
+        return res.status(200).json({ success: true, data: activities, completedData: completed });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+};

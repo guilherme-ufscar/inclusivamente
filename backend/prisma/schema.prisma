@@ -167,6 +167,7 @@ model Student {
   Reports            Report[]
   FamilyCheckins     FamilyCheckin[]
   Tutors             Tutor[]            @relation("StudentTutors")
+  CompletedActivities CompletedGameActivity[]
 }
 
 model Tutor {
@@ -301,4 +302,14 @@ model FamilyCheckin {
   status           String   @default("pending") // pending, sent, replied
   response_json    String? // JSON string
   created_at       DateTime @default(now())
+}
+
+model CompletedGameActivity {
+  id           String   @id @default(uuid())
+  student_id   String
+  student      Student  @relation(fields: [student_id], references: [id])
+  activity_id  String
+  completed_at DateTime @default(now())
+
+  @@unique([student_id, activity_id])
 }
