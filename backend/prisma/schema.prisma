@@ -168,6 +168,8 @@ model Student {
   FamilyCheckins     FamilyCheckin[]
   Tutors             Tutor[]            @relation("StudentTutors")
   CompletedActivities CompletedGameActivity[]
+  InventoryItems      InventoryItem[]
+  HouseItems          HouseItem[]
 }
 
 model Tutor {
@@ -312,4 +314,32 @@ model CompletedGameActivity {
   completed_at DateTime @default(now())
 
   @@unique([student_id, activity_id])
+}
+
+model InventoryItem {
+  id         String   @id @default(uuid())
+  student_id String
+  student    Student  @relation(fields: [student_id], references: [id])
+  soid       String
+  item_type  String
+  amount     Int      @default(0)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([student_id, soid])
+}
+
+model HouseItem {
+  id         String   @id @default(uuid())
+  student_id String
+  student    Student  @relation(fields: [student_id], references: [id])
+  soid       String
+  rotate     Boolean  @default(false)
+  position_x Float    @default(0)
+  position_y Float    @default(0)
+  position_z Float    @default(0)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }

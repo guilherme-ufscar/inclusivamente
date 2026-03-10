@@ -11,6 +11,7 @@ import bnccRoutes from './modules/bncc/bncc.routes';
 import subjectsRoutes from './modules/subjects/subjects.routes';
 import classesRoutes from './modules/classes/classes.routes';
 import guardiansRoutes from './modules/guardians/guardians.routes';
+import inventoryRoutes from './modules/inventory/inventory.routes';
 
 const router = Router();
 
@@ -26,5 +27,6 @@ router.use('/bncc', bnccRoutes);
 router.use('/subjects', subjectsRoutes);
 router.use('/classes', classesRoutes);
 router.use('/guardians', guardiansRoutes);
+router.use('/inventory', inventoryRoutes);
 
 export default router;
