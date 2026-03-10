@@ -135,14 +135,19 @@ export const finishActivity = async (req: Request | any, res: Response) => {
             });
         }
 
+        // Calcular o horário de início (started_at) retroativamente usando o tempo gasto (time_spent)
+        // Se time_spent for 120 (segundos), o started_at será 2 minutos atrás do completed_at atual.
+        const completedDate = new Date();
+        const startedDate = time_spent ? new Date(completedDate.getTime() - Number(time_spent) * 1000) : completedDate;
+
         const log = await prisma.activityLog.create({
             data: {
                 student_id: final_student_id,
                 activity_id: final_activity_id,
                 has_tutor: Boolean(final_has_tutor),
                 tutor_id: final_has_tutor ? final_tutor_id : null,
-                started_at: new Date(),
-                completed_at: new Date(),
+                started_at: startedDate,
+                completed_at: completedDate,
                 time_spent: time_spent !== undefined ? Number(time_spent) : undefined,
                 errors_count: errors_count !== undefined ? Number(errors_count) : undefined,
                 correct_count: correct_count !== undefined ? Number(correct_count) : undefined,
