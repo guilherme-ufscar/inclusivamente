@@ -138,7 +138,10 @@ export const finishActivity = async (req: Request | any, res: Response) => {
         // Calcular o horário de início (started_at) retroativamente usando o tempo gasto (time_spent)
         // Se time_spent for 120 (segundos), o started_at será 2 minutos atrás do completed_at atual.
         const completedDate = new Date();
-        const startedDate = time_spent ? new Date(completedDate.getTime() - Number(time_spent) * 1000) : completedDate;
+        const timeSpentInSeconds = Number(time_spent);
+        const startedDate = (time_spent !== undefined && !isNaN(timeSpentInSeconds) && timeSpentInSeconds > 0)
+            ? new Date(completedDate.getTime() - timeSpentInSeconds * 1000)
+            : completedDate;
 
         const log = await prisma.activityLog.create({
             data: {
