@@ -73,6 +73,12 @@ export const finishActivity = async (req: Request | any, res: Response) => {
         difficulty_perceived = difficulty_perceived ?? difficultyPerceived;
 
         let final_activity_id = activity_id ?? activityId;
+
+        // Permite que a Unity mande o activity_id na URL em vez do body
+        if (!final_activity_id && id && id !== '0' && id !== 'undefined' && id !== '{currentSessionId}') {
+            final_activity_id = id;
+        }
+
         let final_has_tutor = has_tutor !== undefined ? has_tutor : hasTutor;
         let final_tutor_id = tutor_id ?? tutorId;
         let final_student_id = student_id ?? studentId;
