@@ -203,17 +203,26 @@ export const markActivityAsCompleted = async (req: Request, res: Response) => {
     try {
         let { student_id, studentId, activity_id, activityId } = req.body;
 
-        student_id = student_id || studentId;
-        activity_id = activity_id || activityId;
+        let finalStudentId = student_id || studentId;
+        const finalActivityId = activity_id || activityId;
 
-        if (!student_id || !activity_id) {
+        if (!finalStudentId || !finalActivityId) {
             return res.status(400).json({ success: false, message: 'Student ID and Activity ID are required' });
+        }
+
+        // Tentar verificar se o ID fornecido foi na verdade um ID de Usuário (User ID) em vez do ID do Estudante.
+        const providedUser = await prisma.user.findUnique({ where: { id: finalStudentId } });
+        if (providedUser && providedUser.role === 'student') {
+            const linkedStudent = await prisma.student.findFirst({ where: { user_id: providedUser.id } });
+            if (linkedStudent) {
+                finalStudentId = linkedStudent.id;
+            }
         }
 
         // Verifica se já existe para não duplicar (caso faça mais de 2 vezes, contabiliza só 1)
         const existing = await prisma.completedGameActivity.findUnique({
             where: {
-                student_id_activity_id: { student_id, activity_id }
+                student_id_activity_id: { student_id: finalStudentId, activity_id: finalActivityId }
             }
         });
 
@@ -223,24 +232,33 @@ export const markActivityAsCompleted = async (req: Request, res: Response) => {
 
         const completed = await prisma.completedGameActivity.create({
             data: {
-                student_id,
-                activity_id
+                student_id: finalStudentId,
+                activity_id: finalActivityId
             }
         });
 
         return res.status(201).json({ success: true, data: completed, message: 'Activity marked as completed successfully' });
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ success: false, message: 'Internal Server Error' });
+        return res.status(500).json({ success: false, message: 'Internal Server Error (Verify if the ID is a valid student ID and if the database was migrated)' });
     }
 };
 
 export const getCompletedActivities = async (req: Request, res: Response) => {
     try {
-        const { student_id } = req.params as any;
+        let { student_id } = req.params as any;
 
         if (!student_id) {
             return res.status(400).json({ success: false, message: 'Student ID is required' });
+        }
+
+        // Tentar verificar se o ID fornecido foi na verdade um ID de Usuário (User ID) em vez do ID do Estudante.
+        const providedUser = await prisma.user.findUnique({ where: { id: student_id } });
+        if (providedUser && providedUser.role === 'student') {
+            const linkedStudent = await prisma.student.findFirst({ where: { user_id: providedUser.id } });
+            if (linkedStudent) {
+                student_id = linkedStudent.id;
+            }
         }
 
         const completed = await prisma.completedGameActivity.findMany({
