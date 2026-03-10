@@ -53,21 +53,89 @@ export const startActivity = async (req: Request | any, res: Response) => {
     }
 };
 
-export const finishActivity = async (req: Request, res: Response) => {
+export const finishActivity = async (req: Request | any, res: Response) => {
     try {
         const { id } = req.params as any;
-        let { time_spent, timeSpent, errors_count, errorsCount, correct_count, correctCount, difficulty_perceived, difficultyPerceived } = req.body;
+        let {
+            time_spent, timeSpent,
+            errors_count, errorsCount,
+            correct_count, correctCount,
+            difficulty_perceived, difficultyPerceived,
+            activity_id, activityId, // parameters coming from Unity/Game
+            has_tutor, hasTutor,
+            tutor_id, tutorId,
+            student_id, studentId
+        } = req.body;
 
         time_spent = time_spent ?? timeSpent;
         errors_count = errors_count ?? errorsCount;
         correct_count = correct_count ?? correctCount;
         difficulty_perceived = difficulty_perceived ?? difficultyPerceived;
 
+        let final_activity_id = activity_id ?? activityId;
+        let final_has_tutor = has_tutor !== undefined ? has_tutor : hasTutor;
+        let final_tutor_id = tutor_id ?? tutorId;
+        let final_student_id = student_id ?? studentId;
+
         const diff = difficulty_perceived as Difficulty;
 
-        const log = await prisma.activityLog.update({
-            where: { id: id },
+        // 1. Try to find an existing log if a valid UUID was provided in the URL
+        let existingLog = null;
+        if (id && id !== '0' && id !== 'undefined' && id !== '{currentSessionId}') {
+            try {
+                // Basic UUID validation check (standard for Prisma/Postgres)
+                const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+                if (isUuid) {
+                    existingLog = await prisma.activityLog.findUnique({ where: { id: id } });
+                }
+            } catch (e) {
+                // Ignore errors, we'll try to create a new one
+            }
+        }
+
+        if (existingLog) {
+            const log = await prisma.activityLog.update({
+                where: { id: existingLog.id },
+                data: {
+                    completed_at: new Date(),
+                    time_spent: time_spent !== undefined ? Number(time_spent) : undefined,
+                    errors_count: errors_count !== undefined ? Number(errors_count) : undefined,
+                    correct_count: correct_count !== undefined ? Number(correct_count) : undefined,
+                    difficulty_perceived: diff
+                }
+            });
+            return res.status(200).json({ success: true, data: log, message: 'Activity finished' });
+        }
+
+        // 2. No existing log found or ID was a placeholder. Create and finish instantly.
+        // Resolve student_id if not provided
+        if (!final_student_id && req.user) {
+            if (req.user.id && req.user.role === 'student') {
+                final_student_id = req.user.id;
+            } else {
+                const studentProfile = await prisma.student.findFirst({
+                    where: { user_id: req.user.userId || req.user.id }
+                });
+                if (studentProfile) {
+                    final_student_id = studentProfile.id;
+                }
+            }
+        }
+
+        if (!final_student_id || !final_activity_id) {
+            return res.status(400).json({
+                success: false,
+                message: 'Student ID and Activity ID are required to finish an activity session directly.'
+            });
+        }
+
+        const log = await prisma.activityLog.create({
             data: {
+                student_id: final_student_id,
+                activity_id: final_activity_id,
+                has_tutor: Boolean(final_has_tutor),
+                tutor_id: final_has_tutor ? final_tutor_id : null,
+                started_at: new Date(),
                 completed_at: new Date(),
                 time_spent: time_spent !== undefined ? Number(time_spent) : undefined,
                 errors_count: errors_count !== undefined ? Number(errors_count) : undefined,
@@ -76,7 +144,12 @@ export const finishActivity = async (req: Request, res: Response) => {
             }
         });
 
-        return res.status(200).json({ success: true, data: log, message: 'Activity finished' });
+        return res.status(200).json({
+            success: true,
+            data: log,
+            message: 'Activity created and finished instantly (Single-call Flow)'
+        });
+
     } catch (error) {
         console.error(error);
         return res.status(500).json({ success: false, message: 'Internal Server Error' });
