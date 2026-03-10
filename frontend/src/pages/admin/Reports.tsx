@@ -371,9 +371,10 @@ export default function ReportsPage() {
                                                 <BrainCircuit className="w-4 h-4 text-emerald-500" />
                                                 Resumo da IA
                                             </h4>
-                                            <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-sm text-slate-700 leading-relaxed italic">
-                                                "{report.summary_text}"
-                                            </div>
+                                            <div
+                                                className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-sm text-slate-700 leading-relaxed max-h-64 overflow-y-auto custom-scrollbar"
+                                                dangerouslySetInnerHTML={{ __html: report.summary_text.replace(/\n/g, '<br />') }}
+                                            />
                                         </div>
 
                                         <div>
