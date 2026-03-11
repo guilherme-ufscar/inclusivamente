@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { UploadCloud, Copy, Trash2, Edit2, Check, X, ImageIcon } from 'lucide-react';
-import api from '../../../services/api';
+import api from '../../services/api';
 
 interface UploadedImage {
   filename: string;
