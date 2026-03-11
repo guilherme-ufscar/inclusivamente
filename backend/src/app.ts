@@ -4,9 +4,13 @@ import cors from 'cors';
 const app = express();
 
 import routes from './routes';
+import path from 'path';
 
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from the uploads directory
+app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 
 app.use('/api', routes);
 

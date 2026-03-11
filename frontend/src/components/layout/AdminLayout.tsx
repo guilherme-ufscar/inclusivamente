@@ -17,7 +17,8 @@ import {
     MessageSquare,
     ClipboardCheck,
     ListTodo,
-    Compass
+    Compass,
+    Image as ImageIcon
 } from 'lucide-react';
 import { useState } from 'react';
 import { clsx, type ClassValue } from 'clsx';
@@ -74,6 +75,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         { name: 'Graus Parentesco', icon: Users, path: '/admin/kinship' },
 
         { category: 'Sistema' },
+        { name: 'Imagens', icon: ImageIcon, path: '/admin/images' },
         { name: 'Escolas', icon: School, path: '/admin/schools' },
         { name: 'Configurações', icon: Settings, path: '/admin/settings' },
     ];

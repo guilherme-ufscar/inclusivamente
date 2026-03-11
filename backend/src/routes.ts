@@ -12,6 +12,7 @@ import subjectsRoutes from './modules/subjects/subjects.routes';
 import classesRoutes from './modules/classes/classes.routes';
 import guardiansRoutes from './modules/guardians/guardians.routes';
 import inventoryRoutes from './modules/inventory/inventory.routes';
+import uploadsRoutes from './modules/uploads/uploads.routes';
 
 const router = Router();
 
@@ -28,5 +29,6 @@ router.use('/subjects', subjectsRoutes);
 router.use('/classes', classesRoutes);
 router.use('/guardians', guardiansRoutes);
 router.use('/inventory', inventoryRoutes);
+router.use('/uploads', uploadsRoutes);
 
 export default router;

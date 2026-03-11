@@ -24,6 +24,7 @@ import ClassesPage from './pages/admin/Classes';
 import SubjectsPage from './pages/admin/Subjects';
 import ChaptersPage from './pages/admin/Chapters';
 import GuardiansPage from './pages/admin/Guardians';
+import ImagesPage from './pages/admin/Images';
 
 const SchoolDashboard = () => <div>School Dashboard</div>;
 
@@ -59,6 +60,7 @@ const AppRoutes = () => {
       <Route path="/admin/activities" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><ActivitiesPage /></AppLayout></ProtectedRoute>} />
       <Route path="/admin/reports" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><ReportsPage /></AppLayout></ProtectedRoute>} />
       <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><SettingsPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/images" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><ImagesPage /></AppLayout></ProtectedRoute>} />
 
       {/* Novas rotas de conformidade de escopo */}
       <Route path="/admin/guardians" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><GuardiansPage /></AppLayout></ProtectedRoute>} />
