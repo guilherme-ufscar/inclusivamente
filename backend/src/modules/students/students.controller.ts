@@ -121,9 +121,9 @@ export const createStudent = async (req: AuthRequest, res: Response) => {
                     name,
                     email: student_email,
                     password_hash,
-                    role: 'student',
+                    role: 'student' as any,
                     school_id
-                }
+                } as any
             });
             newUserId = newUser.id;
         }
@@ -137,7 +137,7 @@ export const createStudent = async (req: AuthRequest, res: Response) => {
                     cpf: guardian_cpf || null,
                     phone: guardian_phone || null,
                     address: guardian_address || null,
-                }
+                } as any
             });
             guardianId = newGuardian.id;
         }
@@ -159,7 +159,7 @@ export const createStudent = async (req: AuthRequest, res: Response) => {
                 Tutors: tutor_ids && tutor_ids.length > 0 ? {
                     connect: tutor_ids.map((tid: string) => ({ id: tid }))
                 } : undefined
-            }
+            } as any
         });
 
         return res.status(201).json({ success: true, data: student, message: 'Student created successfully' });
@@ -189,11 +189,11 @@ export const updateStudent = async (req: AuthRequest, res: Response) => {
             if (guardianId) {
                 await prisma.guardian.update({
                     where: { id: guardianId },
-                    data: { name: guardian_name, cpf: guardian_cpf, phone: guardian_phone, address: guardian_address }
+                    data: { name: guardian_name, cpf: guardian_cpf, phone: guardian_phone, address: guardian_address } as any
                 });
             } else {
                 const newGuardian = await prisma.guardian.create({
-                    data: { name: guardian_name, cpf: guardian_cpf, phone: guardian_phone, address: guardian_address }
+                    data: { name: guardian_name, cpf: guardian_cpf, phone: guardian_phone, address: guardian_address } as any
                 });
                 guardianId = newGuardian.id;
             }
@@ -215,7 +215,7 @@ export const updateStudent = async (req: AuthRequest, res: Response) => {
                 Tutors: tutor_ids ? {
                     set: tutor_ids.map((tid: string) => ({ id: tid }))
                 } : undefined
-            }
+            } as any
         });
 
         return res.status(200).json({ success: true, data: student, message: 'Student updated successfully' });
@@ -265,8 +265,8 @@ export const deleteStudent = async (req: AuthRequest, res: Response) => {
         await prisma.student.delete({ where: { id } });
 
         // Remover o 'user' associado, se existir
-        if (student.user_id) {
-            await prisma.user.delete({ where: { id: student.user_id } });
+        if ((student as any).user_id) {
+            await prisma.user.delete({ where: { id: (student as any).user_id } });
         }
 
         return res.status(200).json({ success: true, message: 'Student deleted successfully' });
