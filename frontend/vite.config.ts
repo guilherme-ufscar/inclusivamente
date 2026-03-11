@@ -7,5 +7,8 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     allowedHosts: ['painel.inclusivamenteeduca.com'],
+    hmr: {
+      clientPort: 443,
+    },
   },
 })

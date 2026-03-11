@@ -1,0 +1,39 @@
+
+> backend@1.0.0 dev
+> nodemon src/server.ts
+
+[33m[nodemon] 3.1.14[39m
+[33m[nodemon] to restart at any time, enter `rs`[39m
+[33m[nodemon] watching path(s): *.*[39m
+[33m[nodemon] watching extensions: ts,json[39m
+[32m[nodemon] starting `ts-node src/server.ts`[39m
+/app/node_modules/ts-node/src/index.ts:859
+    return new TSError(diagnosticText, diagnosticCodes, diagnostics);
+           ^
+TSError: ⨯ Unable to compile TypeScript:
+src/modules/students/students.controller.ts(124,21): error TS2322: Type '"student"' is not assignable to type 'Role'.
+src/modules/students/students.controller.ts(137,21): error TS2353: Object literal may only specify known properties, and 'cpf' does not exist in type '(Without<GuardianCreateInput, GuardianUncheckedCreateInput> & GuardianUncheckedCreateInput) | (Without<...> & GuardianCreateInput)'.
+src/modules/students/students.controller.ts(154,17): error TS2353: Object literal may only specify known properties, and 'cpf' does not exist in type '(Without<StudentCreateInput, StudentUncheckedCreateInput> & StudentUncheckedCreateInput) | (Without<...> & StudentCreateInput)'.
+src/modules/students/students.controller.ts(192,50): error TS2353: Object literal may only specify known properties, and 'cpf' does not exist in type '(Without<GuardianUpdateInput, GuardianUncheckedUpdateInput> & GuardianUncheckedUpdateInput) | (Without<...> & GuardianUpdateInput)'.
+src/modules/students/students.controller.ts(196,50): error TS2353: Object literal may only specify known properties, and 'cpf' does not exist in type '(Without<GuardianCreateInput, GuardianUncheckedCreateInput> & GuardianUncheckedCreateInput) | (Without<...> & GuardianCreateInput)'.
+src/modules/students/students.controller.ts(210,17): error TS2353: Object literal may only specify known properties, and 'cpf' does not exist in type '(Without<StudentUpdateInput, StudentUncheckedUpdateInput> & StudentUncheckedUpdateInput) | (Without<...> & StudentUpdateInput)'.
+src/modules/students/students.controller.ts(268,21): error TS2339: Property 'user_id' does not exist on type '{ id: string; name: string; created_at: Date; updated_at: Date; school_id: string; birth_date: Date; grade_level: string | null; status: string | null; primary_guardian_id: string | null; class_id: string | null; }'.
+src/modules/students/students.controller.ts(269,61): error TS2339: Property 'user_id' does not exist on type '{ id: string; name: string; created_at: Date; updated_at: Date; school_id: string; birth_date: Date; grade_level: string | null; status: string | null; primary_guardian_id: string | null; class_id: string | null; }'.
+
+    at createTSError (/app/node_modules/ts-node/src/index.ts:859:12)
+    at reportTSError (/app/node_modules/ts-node/src/index.ts:863:19)
+    at getOutput (/app/node_modules/ts-node/src/index.ts:1077:36)
+    at Object.compile (/app/node_modules/ts-node/src/index.ts:1433:41)
+    at Module.m._compile (/app/node_modules/ts-node/src/index.ts:1617:30)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at Object.require.extensions.<computed> [as .ts] (/app/node_modules/ts-node/src/index.ts:1621:12)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Function.Module._load (node:internal/modules/cjs/loader:1091:12)
+    at Module.require (node:internal/modules/cjs/loader:1289:19) {
+  diagnosticCodes: [
+    2322, 2353, 2353,
+    2353, 2353, 2353,
+    2339, 2339
+  ]
+}
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
