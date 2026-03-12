@@ -14,7 +14,6 @@ import {
     BrainCircuit,
     FileText,
     Image as ImageIcon,
-    School,
     ClipboardList
 } from 'lucide-react';
 import { useState } from 'react';
@@ -47,8 +46,7 @@ export default function AppLayout({ children }: LayoutProps) {
                 { name: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' },
                 { category: 'Pedagógico' },
                 { name: 'Matérias', icon: FileText, path: '/admin/subjects' },
-                { name: 'Capítulos', icon: FileText, path: '/admin/chapters' },
-                { name: 'Turmas', icon: Users, path: '/admin/classes' },
+                { name: 'Pílulas', icon: FileText, path: '/admin/chapters' },
                 { name: 'Alunos', icon: Users2, path: '/admin/students' },
                 { name: 'Tutores', icon: HeartHandshake, path: '/admin/staff' },
                 { category: 'Acompanhamento' },
@@ -80,7 +78,6 @@ export default function AppLayout({ children }: LayoutProps) {
                 { category: 'Gestão Escolar' },
                 { name: 'Alunos', icon: Users2, path: '/school/students' },
                 { name: 'Tutores', icon: HeartHandshake, path: '/school/tutors' },
-                { name: 'Turmas', icon: School, path: '/school/classes' },
                 { category: 'Pedagógico' },
                 { name: 'Sondagem Pedagógica', icon: ClipboardList, path: '/school/anamnesis' },
                 { name: 'Atividades', icon: BrainCircuit, path: '/school/activities' },

@@ -84,6 +84,10 @@ export default function StudentsPage() {
     const [editingId, setEditingId] = useState<string | null>(null);
     const navigate = useNavigate();
 
+    const [classMode, setClassMode] = useState<'existing' | 'new'>('existing');
+    const [newClassName, setNewClassName] = useState('');
+    const [newClassGrade, setNewClassGrade] = useState('');
+
     const [formData, setFormData] = useState({
         name: '',
         birth_date: '',
@@ -190,6 +194,9 @@ export default function StudentsPage() {
                 guardian_address: ''
             });
         }
+        setClassMode('existing');
+        setNewClassName('');
+        setNewClassGrade('');
         setIsModalOpen(true);
     };
 
@@ -201,9 +208,21 @@ export default function StudentsPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            // Formata a data para ISO complementar se necessário no Prisma
+            let classId = formData.class_id;
+
+            // If creating a new class, do it first
+            if (classMode === 'new' && newClassName.trim()) {
+                const classRes = await api.post('/classes', {
+                    name: newClassName.trim(),
+                    grade_level: newClassGrade.trim() || formData.grade_level,
+                    school_id: formData.school_id
+                });
+                classId = classRes.data.data.id;
+            }
+
             const payload = {
                 ...formData,
+                class_id: classId,
                 birth_date: new Date(formData.birth_date).toISOString()
             };
 
@@ -395,11 +414,9 @@ export default function StudentsPage() {
                                         onChange={e => setFormData({ ...formData, birth_date: e.target.value })}
                                     />
                                     <Input
-                                        label="Série (Ano Numérico)"
-                                        type="number"
-                                        min="1"
-                                        max="12"
-                                        placeholder="ex: 1 (Para 1º Ano)"
+                                        label="Série / Ano"
+                                        type="text"
+                                        placeholder="ex: 1º Ano, Pré-escola, EJA..."
                                         value={formData.grade_level}
                                         onChange={e => setFormData({ ...formData, grade_level: e.target.value })}
                                     />
@@ -492,18 +509,47 @@ export default function StudentsPage() {
                                     </select>
                                 </div>
 
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium text-slate-700">Turma (Opcional)</label>
-                                    <select
-                                        className="flex h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-                                        value={formData.class_id}
-                                        onChange={e => setFormData({ ...formData, class_id: e.target.value })}
-                                    >
-                                        <option value="">Nenhuma turma</option>
-                                        {classes.filter(c => c.school_id === formData.school_id).map(c => (
-                                            <option key={c.id} value={c.id}>{c.name}</option>
-                                        ))}
-                                    </select>
+                                <div className="space-y-3">
+                                    <label className="text-sm font-medium text-slate-700">Turma</label>
+                                    <div className="flex items-center gap-4">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="classMode" checked={classMode === 'existing'} onChange={() => setClassMode('existing')} className="text-brand-primary" />
+                                            <span className="text-sm text-slate-700">Selecionar existente</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="radio" name="classMode" checked={classMode === 'new'} onChange={() => setClassMode('new')} className="text-brand-primary" />
+                                            <span className="text-sm text-slate-700">Criar nova turma</span>
+                                        </label>
+                                    </div>
+                                    {classMode === 'existing' ? (
+                                        <select
+                                            className="flex h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                                            value={formData.class_id}
+                                            onChange={e => setFormData({ ...formData, class_id: e.target.value })}
+                                        >
+                                            <option value="">Nenhuma turma</option>
+                                            {classes.filter(c => c.school_id === formData.school_id).map(c => (
+                                                <option key={c.id} value={c.id}>{c.name}</option>
+                                            ))}
+                                        </select>
+                                    ) : (
+                                        <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                            <Input
+                                                label="Nome da Turma"
+                                                required={classMode === 'new'}
+                                                placeholder="Ex: Turma A, Manhã..."
+                                                value={newClassName}
+                                                onChange={e => setNewClassName(e.target.value)}
+                                            />
+                                            <Input
+                                                label="Série/Nível da Turma"
+                                                placeholder="Ex: 1º Ano, Pré-escola..."
+                                                value={newClassGrade}
+                                                onChange={e => setNewClassGrade(e.target.value)}
+                                            />
+                                            <p className="col-span-2 text-[10px] text-slate-400">A turma será vinculada automaticamente à escola selecionada acima.</p>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="space-y-1">

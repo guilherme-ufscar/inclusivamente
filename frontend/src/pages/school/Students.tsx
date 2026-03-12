@@ -44,6 +44,9 @@ export default function SchoolStudents() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [classMode, setClassMode] = useState<'existing' | 'new'>('existing');
+    const [newClassName, setNewClassName] = useState('');
+    const [newClassGrade, setNewClassGrade] = useState('');
 
     const [formData, setFormData] = useState({
         name: '',
@@ -112,13 +115,28 @@ export default function SchoolStudents() {
                 guardian_name: '', guardian_cpf: '', guardian_phone: '', guardian_address: ''
             });
         }
+        setClassMode('existing');
+        setNewClassName('');
+        setNewClassGrade('');
         setIsModalOpen(true);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const payload = { ...formData, school_id: schoolId };
+            let classId = formData.class_id;
+
+            // If creating a new class, do it first
+            if (classMode === 'new' && newClassName.trim()) {
+                const classRes = await api.post('/classes', {
+                    name: newClassName.trim(),
+                    grade_level: newClassGrade.trim() || formData.grade_level,
+                    school_id: schoolId
+                });
+                classId = classRes.data.data.id;
+            }
+
+            const payload = { ...formData, school_id: schoolId, class_id: classId };
             if (editingId) {
                 await api.put(`/students/${editingId}`, payload);
             } else {
@@ -244,12 +262,30 @@ export default function SchoolStudents() {
                     <div>
                         <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-3 border-b border-slate-100 pb-2">Matrícula</h3>
                         <div className="space-y-4">
-                            <div>
+                            <div className="space-y-3">
                                 <label className="text-sm font-medium text-slate-700">Turma</label>
-                                <select className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-primary outline-none" value={formData.class_id} onChange={e => setFormData({ ...formData, class_id: e.target.value })}>
-                                    <option value="">Selecione...</option>
-                                    {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                </select>
+                                <div className="flex items-center gap-4">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="classModeSchool" checked={classMode === 'existing'} onChange={() => setClassMode('existing')} className="text-brand-primary" />
+                                        <span className="text-sm text-slate-700">Selecionar existente</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="classModeSchool" checked={classMode === 'new'} onChange={() => setClassMode('new')} className="text-brand-primary" />
+                                        <span className="text-sm text-slate-700">Criar nova turma</span>
+                                    </label>
+                                </div>
+                                {classMode === 'existing' ? (
+                                    <select className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-primary outline-none" value={formData.class_id} onChange={e => setFormData({ ...formData, class_id: e.target.value })}>
+                                        <option value="">Nenhuma turma</option>
+                                        {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                    </select>
+                                ) : (
+                                    <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                        <Input label="Nome da Turma" required={classMode === 'new'} placeholder="Ex: Turma A, Manhã..." value={newClassName} onChange={e => setNewClassName(e.target.value)} />
+                                        <Input label="Série/Nível" placeholder="Ex: 1º Ano, Pré-escola..." value={newClassGrade} onChange={e => setNewClassGrade(e.target.value)} />
+                                        <p className="col-span-2 text-[10px] text-slate-400">A turma será vinculada automaticamente à sua escola.</p>
+                                    </div>
+                                )}
                             </div>
                             <div>
                                 <label className="text-sm font-medium text-slate-700">Tutor(es)</label>
