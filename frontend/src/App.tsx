@@ -34,6 +34,7 @@ import SchoolClassesPage from './pages/school/Classes';
 import SchoolAnamnesisPage from './pages/school/Anamnesis';
 import SchoolActivitiesPage from './pages/school/Activities';
 import SchoolReportsPage from './pages/school/Reports';
+import SchoolGuardiansPage from './pages/school/Guardians';
 
 const ProtectedRoute = ({ children, allowedRoles }: { children: JSX.Element, allowedRoles?: string[] }) => {
   const { user, token, isLoading } = useAuth();
@@ -88,6 +89,7 @@ const AppRoutes = () => {
       <Route path="/school/anamnesis" element={<ProtectedRoute allowedRoles={['school']}><AppLayout><SchoolAnamnesisPage /></AppLayout></ProtectedRoute>} />
       <Route path="/school/activities" element={<ProtectedRoute allowedRoles={['school']}><AppLayout><SchoolActivitiesPage /></AppLayout></ProtectedRoute>} />
       <Route path="/school/reports" element={<ProtectedRoute allowedRoles={['school']}><AppLayout><SchoolReportsPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/school/guardians" element={<ProtectedRoute allowedRoles={['school']}><AppLayout><SchoolGuardiansPage /></AppLayout></ProtectedRoute>} />
 
       <Route path="/tutor/dashboard" element={<ProtectedRoute allowedRoles={['tutor']}><AppLayout><TutorDashboard /></AppLayout></ProtectedRoute>} />
       <Route path="/tutor/students" element={<ProtectedRoute allowedRoles={['tutor']}><AppLayout><MyStudentsPage /></AppLayout></ProtectedRoute>} />

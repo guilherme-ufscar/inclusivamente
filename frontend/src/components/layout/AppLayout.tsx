@@ -78,6 +78,7 @@ export default function AppLayout({ children }: LayoutProps) {
                 { category: 'Gestão Escolar' },
                 { name: 'Alunos', icon: Users2, path: '/school/students' },
                 { name: 'Tutores', icon: HeartHandshake, path: '/school/tutors' },
+                { name: 'Responsáveis', icon: Users, path: '/school/guardians' },
                 { category: 'Pedagógico' },
                 { name: 'Sondagem Pedagógica', icon: ClipboardList, path: '/school/anamnesis' },
                 { name: 'Atividades', icon: BrainCircuit, path: '/school/activities' },

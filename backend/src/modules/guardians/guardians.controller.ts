@@ -3,6 +3,105 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+export const getGuardians = async (req: Request, res: Response) => {
+    try {
+        const { school_id } = req.query as any;
+
+        let guardians;
+        if (school_id) {
+            // Get guardians linked to students of this school
+            const students = await prisma.student.findMany({
+                where: { school_id: String(school_id) },
+                select: { primary_guardian_id: true }
+            });
+            const guardianIds = students
+                .map(s => s.primary_guardian_id)
+                .filter((id): id is string => !!id);
+            
+            guardians = await prisma.guardian.findMany({
+                where: { id: { in: guardianIds } },
+                include: { kinship_type: true },
+                orderBy: { created_at: 'desc' }
+            });
+        } else {
+            guardians = await prisma.guardian.findMany({
+                include: { kinship_type: true },
+                orderBy: { created_at: 'desc' }
+            });
+        }
+
+        return res.status(200).json({ success: true, data: guardians });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+};
+
+export const updateGuardian = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params as any;
+        const { name, email, phone, kinship_type_id, student_id } = req.body;
+
+        const guardian = await prisma.guardian.update({
+            where: { id },
+            data: { name, email, phone, kinship_type_id }
+        });
+
+        // Update student link if provided
+        if (student_id) {
+            await prisma.student.updateMany({
+                where: { primary_guardian_id: id },
+                data: { primary_guardian_id: null }
+            });
+            await prisma.student.update({
+                where: { id: student_id },
+                data: { primary_guardian_id: id }
+            });
+        }
+
+        // Also update linked User if exists
+        if (email) {
+            const user = await prisma.user.findFirst({ where: { role: 'parent', email: guardian.email || undefined } });
+            if (user) {
+                await prisma.user.update({ where: { id: user.id }, data: { name, email } });
+            }
+        }
+
+        return res.status(200).json({ success: true, data: guardian, message: 'Guardian updated successfully' });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+};
+
+export const deleteGuardian = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params as any;
+
+        // Unlink students
+        await prisma.student.updateMany({
+            where: { primary_guardian_id: id },
+            data: { primary_guardian_id: null }
+        });
+
+        // Find and delete linked user
+        const guardian = await prisma.guardian.findUnique({ where: { id } });
+        if (guardian?.email) {
+            const user = await prisma.user.findFirst({ where: { email: guardian.email, role: 'parent' } });
+            if (user) {
+                await prisma.user.delete({ where: { id: user.id } });
+            }
+        }
+
+        await prisma.guardian.delete({ where: { id } });
+        return res.status(200).json({ success: true, message: 'Guardian deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+};
+
+
 export const getGuardianDashboard = async (req: Request | any, res: Response) => {
     try {
         const userId = req.user?.userId;
