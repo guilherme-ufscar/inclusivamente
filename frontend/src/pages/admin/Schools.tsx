@@ -4,7 +4,7 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 import api from '../../services/api';
-import { Plus, Pencil, Trash2, Search, Building2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Building2, ShieldCheck, ShieldOff, Eye, EyeOff } from 'lucide-react';
 
 interface School {
     id: string;
@@ -12,6 +12,8 @@ interface School {
     email: string;
     phone: string;
     address: string;
+    has_account: boolean;
+    account_email: string | null;
 }
 
 export default function SchoolsPage() {
@@ -19,12 +21,15 @@ export default function SchoolsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const [formData, setFormData] = useState({
         name: '',
         email: '',
         phone: '',
-        address: ''
+        address: '',
+        password: ''
     });
 
     const fetchSchools = async () => {
@@ -52,12 +57,14 @@ export default function SchoolsPage() {
                 name: school.name,
                 email: school.email || '',
                 phone: school.phone || '',
-                address: school.address || ''
+                address: school.address || '',
+                password: ''
             });
         } else {
             setEditingId(null);
-            setFormData({ name: '', email: '', phone: '', address: '' });
+            setFormData({ name: '', email: '', phone: '', address: '', password: '' });
         }
+        setShowPassword(false);
         setIsModalOpen(true);
     };
 
@@ -72,18 +79,23 @@ export default function SchoolsPage() {
             if (editingId) {
                 await api.put(`/schools/${editingId}`, formData);
             } else {
+                if (!formData.email || !formData.password) {
+                    alert('E-mail e senha são obrigatórios para criar a conta da escola.');
+                    return;
+                }
                 await api.post('/schools', formData);
             }
             handleCloseModal();
             fetchSchools();
-        } catch (err) {
+        } catch (err: any) {
             console.error('Failed to save school', err);
-            alert('Erro ao salvar escola.');
+            const msg = err?.response?.data?.message || 'Erro ao salvar escola.';
+            alert(msg);
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (window.confirm('Tem certeza que deseja excluir esta escola? Todos os dados vinculados podem ser afetados.')) {
+        if (window.confirm('Tem certeza que deseja excluir esta escola? Todos os dados vinculados (conta, alunos, tutores) podem ser afetados.')) {
             try {
                 await api.delete(`/schools/${id}`);
                 fetchSchools();
@@ -93,6 +105,11 @@ export default function SchoolsPage() {
             }
         }
     };
+
+    const filteredSchools = schools.filter(s =>
+        s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (s.email || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     return (
         <div className="space-y-6">
@@ -114,6 +131,8 @@ export default function SchoolsPage() {
                         <input
                             type="text"
                             placeholder="Buscar escolas..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-brand-primary outline-none"
                         />
                     </div>
@@ -124,25 +143,26 @@ export default function SchoolsPage() {
                         <thead className="bg-slate-50/50 text-slate-500 font-medium border-b border-slate-100">
                             <tr>
                                 <th className="px-6 py-4">Nome da Escola</th>
-                                <th className="px-6 py-4">Contato (E-mail)</th>
+                                <th className="px-6 py-4">E-mail / Login</th>
                                 <th className="px-6 py-4">Telefone</th>
+                                <th className="px-6 py-4 text-center">Conta</th>
                                 <th className="px-6 py-4 text-right">Ações</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={4} className="px-6 py-8 text-center text-slate-500">Curregando dados...</td>
+                                    <td colSpan={5} className="px-6 py-8 text-center text-slate-500">Carregando dados...</td>
                                 </tr>
-                            ) : schools.length === 0 ? (
+                            ) : filteredSchools.length === 0 ? (
                                 <tr>
-                                    <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
+                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
                                         <Building2 className="w-12 h-12 mx-auto text-slate-300 mb-3" />
                                         Nenhuma escola cadastrada no momento.
                                     </td>
                                 </tr>
                             ) : (
-                                schools.map((school) => (
+                                filteredSchools.map((school) => (
                                     <tr key={school.id} className="hover:bg-slate-50/50 transition-colors">
                                         <td className="px-6 py-4 font-medium text-slate-900 flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-lg bg-brand-primary/10 text-brand-primary flex items-center justify-center font-bold">
@@ -152,6 +172,17 @@ export default function SchoolsPage() {
                                         </td>
                                         <td className="px-6 py-4 text-slate-600">{school.email || '-'}</td>
                                         <td className="px-6 py-4 text-slate-600">{school.phone || '-'}</td>
+                                        <td className="px-6 py-4 text-center">
+                                            {school.has_account ? (
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
+                                                    <ShieldCheck className="w-3.5 h-3.5" /> Ativo
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-500">
+                                                    <ShieldOff className="w-3.5 h-3.5" /> Sem conta
+                                                </span>
+                                            )}
+                                        </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
                                                 <button
@@ -181,31 +212,73 @@ export default function SchoolsPage() {
                 onClose={handleCloseModal}
                 title={editingId ? 'Editar Escola' : 'Nova Escola'}
             >
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <Input
-                        label="Nome da Instituição"
-                        required
-                        value={formData.name}
-                        onChange={e => setFormData({ ...formData, name: e.target.value })}
-                    />
-                    <Input
-                        label="E-mail de Contato"
-                        type="email"
-                        value={formData.email}
-                        onChange={e => setFormData({ ...formData, email: e.target.value })}
-                    />
-                    <div className="grid grid-cols-2 gap-4">
-                        <Input
-                            label="Telefone"
-                            value={formData.phone}
-                            onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                        />
-                        <Input
-                            label="Endereço (Opcional)"
-                            value={formData.address}
-                            onChange={e => setFormData({ ...formData, address: e.target.value })}
-                        />
+                <form onSubmit={handleSubmit} className="space-y-5">
+                    {/* Dados da Instituição */}
+                    <div>
+                        <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-3 border-b border-slate-100 pb-2">
+                            Dados da Instituição
+                        </h3>
+                        <div className="space-y-4">
+                            <Input
+                                label="Nome da Instituição"
+                                required
+                                value={formData.name}
+                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                            />
+                            <div className="grid grid-cols-2 gap-4">
+                                <Input
+                                    label="Telefone"
+                                    value={formData.phone}
+                                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                />
+                                <Input
+                                    label="Endereço (Opcional)"
+                                    value={formData.address}
+                                    onChange={e => setFormData({ ...formData, address: e.target.value })}
+                                />
+                            </div>
+                        </div>
                     </div>
+
+                    {/* Credenciais de Acesso */}
+                    <div>
+                        <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-3 border-b border-slate-100 pb-2">
+                            🔐 Credenciais de Acesso
+                        </h3>
+                        <p className="text-xs text-slate-400 mb-3">
+                            {editingId
+                                ? 'Altere o e-mail ou senha da conta. Deixe a senha em branco para manter a atual.'
+                                : 'Defina o e-mail e senha que a escola usará para acessar o sistema.'}
+                        </p>
+                        <div className="space-y-4">
+                            <Input
+                                label="E-mail de Acesso"
+                                type="email"
+                                required={!editingId}
+                                placeholder="escola@exemplo.com"
+                                value={formData.email}
+                                onChange={e => setFormData({ ...formData, email: e.target.value })}
+                            />
+                            <div className="relative">
+                                <Input
+                                    label={editingId ? 'Nova Senha (opcional)' : 'Senha'}
+                                    type={showPassword ? 'text' : 'password'}
+                                    required={!editingId}
+                                    placeholder={editingId ? 'Deixe em branco para manter' : 'Mínimo 6 caracteres'}
+                                    value={formData.password}
+                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-[38px] text-slate-400 hover:text-slate-600"
+                                >
+                                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="pt-4 flex justify-end gap-3">
                         <Button type="button" variant="ghost" onClick={handleCloseModal}>
                             Cancelar

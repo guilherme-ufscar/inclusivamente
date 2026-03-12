@@ -13,7 +13,9 @@ import {
     MessageSquare,
     BrainCircuit,
     FileText,
-    Image as ImageIcon
+    Image as ImageIcon,
+    School,
+    ClipboardList
 } from 'lucide-react';
 import { useState } from 'react';
 import { clsx, type ClassValue } from 'clsx';
@@ -71,6 +73,19 @@ export default function AppLayout({ children }: LayoutProps) {
                 { name: 'Meus Alunos', icon: Users2, path: '/tutor/students' },
                 { name: 'Lançar Atividade', icon: BrainCircuit, path: '/tutor/activities' },
                 { name: 'Pareceres IA', icon: FileText, path: '/tutor/reports' },
+            ];
+        } else if (user?.role === 'school') {
+            return [
+                { name: 'Dashboard', icon: LayoutDashboard, path: '/school/dashboard' },
+                { category: 'Gestão Escolar' },
+                { name: 'Alunos', icon: Users2, path: '/school/students' },
+                { name: 'Tutores', icon: HeartHandshake, path: '/school/tutors' },
+                { name: 'Turmas', icon: School, path: '/school/classes' },
+                { category: 'Pedagógico' },
+                { name: 'Sondagem Pedagógica', icon: ClipboardList, path: '/school/anamnesis' },
+                { name: 'Atividades', icon: BrainCircuit, path: '/school/activities' },
+                { category: 'Acompanhamento' },
+                { name: 'Relatórios', icon: FileText, path: '/school/reports' },
             ];
         } else if (user?.role === 'parent') {
             return [

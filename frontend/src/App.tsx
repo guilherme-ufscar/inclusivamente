@@ -26,7 +26,14 @@ import ChaptersPage from './pages/admin/Chapters';
 import GuardiansPage from './pages/admin/Guardians';
 import ImagesPage from './pages/admin/Images';
 
-const SchoolDashboard = () => <div>School Dashboard</div>;
+// School Pages
+import SchoolDashboard from './pages/school/Dashboard';
+import SchoolStudentsPage from './pages/school/Students';
+import SchoolTutorsPage from './pages/school/Tutors';
+import SchoolClassesPage from './pages/school/Classes';
+import SchoolAnamnesisPage from './pages/school/Anamnesis';
+import SchoolActivitiesPage from './pages/school/Activities';
+import SchoolReportsPage from './pages/school/Reports';
 
 const ProtectedRoute = ({ children, allowedRoles }: { children: JSX.Element, allowedRoles?: string[] }) => {
   const { user, token, isLoading } = useAuth();
@@ -75,6 +82,12 @@ const AppRoutes = () => {
       <Route path="/admin/kinship" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><KinshipPage /></AppLayout></ProtectedRoute>} />
 
       <Route path="/school/dashboard" element={<ProtectedRoute allowedRoles={['school']}><AppLayout><SchoolDashboard /></AppLayout></ProtectedRoute>} />
+      <Route path="/school/students" element={<ProtectedRoute allowedRoles={['school']}><AppLayout><SchoolStudentsPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/school/tutors" element={<ProtectedRoute allowedRoles={['school']}><AppLayout><SchoolTutorsPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/school/classes" element={<ProtectedRoute allowedRoles={['school']}><AppLayout><SchoolClassesPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/school/anamnesis" element={<ProtectedRoute allowedRoles={['school']}><AppLayout><SchoolAnamnesisPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/school/activities" element={<ProtectedRoute allowedRoles={['school']}><AppLayout><SchoolActivitiesPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/school/reports" element={<ProtectedRoute allowedRoles={['school']}><AppLayout><SchoolReportsPage /></AppLayout></ProtectedRoute>} />
 
       <Route path="/tutor/dashboard" element={<ProtectedRoute allowedRoles={['tutor']}><AppLayout><TutorDashboard /></AppLayout></ProtectedRoute>} />
       <Route path="/tutor/students" element={<ProtectedRoute allowedRoles={['tutor']}><AppLayout><MyStudentsPage /></AppLayout></ProtectedRoute>} />
