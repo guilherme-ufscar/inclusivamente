@@ -4,7 +4,7 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 import api from '../../services/api';
-import { Plus, Pencil, Trash2, Search, Building2, ShieldCheck, ShieldOff, Eye, EyeOff } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Building2, ShieldCheck, ShieldOff, Eye, EyeOff, KeyRound } from 'lucide-react';
 
 interface School {
     id: string;
@@ -241,9 +241,10 @@ export default function SchoolsPage() {
                     </div>
 
                     {/* Credenciais de Acesso */}
-                    <div>
-                        <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-3 border-b border-slate-100 pb-2">
-                            🔐 Credenciais de Acesso
+                    <div className="mt-6">
+                        <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-1 border-b border-slate-100 pb-2 flex items-center gap-2">
+                            <KeyRound className="w-4 h-4 text-brand-primary" />
+                            Credenciais de Acesso
                         </h3>
                         <p className="text-xs text-slate-400 mb-3">
                             {editingId
@@ -259,22 +260,27 @@ export default function SchoolsPage() {
                                 value={formData.email}
                                 onChange={e => setFormData({ ...formData, email: e.target.value })}
                             />
-                            <div className="relative">
-                                <Input
-                                    label={editingId ? 'Nova Senha (opcional)' : 'Senha'}
-                                    type={showPassword ? 'text' : 'password'}
-                                    required={!editingId}
-                                    placeholder={editingId ? 'Deixe em branco para manter' : 'Mínimo 6 caracteres'}
-                                    value={formData.password}
-                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-[38px] text-slate-400 hover:text-slate-600"
-                                >
-                                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                </button>
+                            <div>
+                                <label className="text-sm font-medium text-slate-700">
+                                    {editingId ? 'Nova Senha (opcional)' : 'Senha'}
+                                </label>
+                                <div className="relative mt-1">
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        required={!editingId}
+                                        placeholder={editingId ? 'Deixe em branco para manter' : 'Mínimo 6 caracteres'}
+                                        value={formData.password}
+                                        onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                        className="flex h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 pr-10 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent transition-shadow"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                    >
+                                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

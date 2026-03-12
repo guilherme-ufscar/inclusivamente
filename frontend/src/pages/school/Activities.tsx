@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card } from '../../components/ui/Card';
 import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
-import { BrainCircuit, Clock, CheckCircle2, AlertCircle, BookOpen } from 'lucide-react';
+import { BrainCircuit, Clock, CheckCircle2, AlertCircle, BookOpen, MessageSquare } from 'lucide-react';
 
 interface Student {
     id: string;
@@ -141,8 +141,8 @@ export default function SchoolActivities() {
                                     </div>
                                 </div>
                                 {act.tutor_observations && (
-                                    <p className="mt-2 text-sm text-slate-500 italic bg-slate-50 rounded-lg p-3">
-                                        💬 {act.tutor_observations}
+                                    <p className="mt-2 text-sm text-slate-500 italic bg-slate-50 rounded-lg p-3 flex items-start gap-2">
+                                        <MessageSquare className="w-4 h-4 mt-0.5 shrink-0 text-slate-400" /> {act.tutor_observations}
                                     </p>
                                 )}
                             </div>
