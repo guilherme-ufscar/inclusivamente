@@ -56,7 +56,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         { name: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' },
 
         { category: 'Pedagógico' },
-        { name: 'Matérias', icon: BookOpen, path: '/admin/subjects' },
+        { name: 'Disciplinas', icon: BookOpen, path: '/admin/subjects' },
         { name: 'Capítulos', icon: ListTodo, path: '/admin/chapters' },
         { name: 'Turmas', icon: Users, path: '/admin/classes' },
         { name: 'Alunos', icon: Users2, path: '/admin/students' },

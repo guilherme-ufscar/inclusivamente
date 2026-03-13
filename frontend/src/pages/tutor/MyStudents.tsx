@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card } from '../../components/ui/Card';
 import api from '../../services/api';
-import { Search, GraduationCap, ClipboardEdit } from 'lucide-react';
+import { Search, GraduationCap, ClipboardEdit, UserCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface Student {
@@ -91,12 +91,21 @@ export default function MyStudentsPage() {
                                             )}
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <button
-                                                onClick={() => navigate(`/tutor/activities?student=${student.id}`)}
-                                                className="p-2 text-brand-primary hover:bg-brand-primary/10 rounded-lg"
-                                            >
-                                                <ClipboardEdit className="w-4 h-4" />
-                                            </button>
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    onClick={() => navigate(`/tutor/students/${student.id}/profile`)}
+                                                    title="Ver Perfil"
+                                                    className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors"
+                                                >
+                                                    <UserCircle className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => navigate(`/tutor/activities?student=${student.id}`)}
+                                                    className="p-2 text-brand-primary hover:bg-brand-primary/10 rounded-lg"
+                                                >
+                                                    <ClipboardEdit className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))

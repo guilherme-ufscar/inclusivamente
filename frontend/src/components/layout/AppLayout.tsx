@@ -45,7 +45,7 @@ export default function AppLayout({ children }: LayoutProps) {
             return [
                 { name: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' },
                 { category: 'Pedagógico' },
-                { name: 'Matérias', icon: FileText, path: '/admin/subjects' },
+                { name: 'Disciplinas', icon: FileText, path: '/admin/subjects' },
                 { name: 'Pílulas', icon: FileText, path: '/admin/chapters' },
                 { name: 'Alunos', icon: Users2, path: '/admin/students' },
                 { name: 'Tutores', icon: HeartHandshake, path: '/admin/staff' },

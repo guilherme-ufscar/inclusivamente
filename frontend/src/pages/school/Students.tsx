@@ -5,7 +5,8 @@ import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
-import { Plus, Pencil, Trash2, Search, Users2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Users2, UserCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface Tutor {
     id: string;
@@ -69,6 +70,7 @@ const maskPhone = (v: string) => {
 
 export default function SchoolStudents() {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const schoolId = user?.school_id;
     const [students, setStudents] = useState<Student[]>([]);
     const [tutors, setTutors] = useState<Tutor[]>([]);
@@ -311,6 +313,13 @@ export default function SchoolStudents() {
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
+                                            <button
+                                                onClick={() => navigate(`/school/students/${student.id}/profile`)}
+                                                title="Ver Perfil"
+                                                className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors"
+                                            >
+                                                <UserCircle className="w-4 h-4" />
+                                            </button>
                                             <button onClick={() => handleOpenModal(student)} className="p-2 text-slate-400 hover:text-brand-accent hover:bg-brand-accent/10 rounded-lg transition-colors">
                                                 <Pencil className="w-4 h-4" />
                                             </button>

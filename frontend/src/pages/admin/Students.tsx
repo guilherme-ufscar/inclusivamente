@@ -4,7 +4,7 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 import api from '../../services/api';
-import { Plus, Pencil, Trash2, Search, GraduationCap, ClipboardEdit } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, GraduationCap, ClipboardEdit, UserCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface Student {
@@ -356,6 +356,13 @@ export default function StudentsPage() {
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    onClick={() => navigate(`/admin/students/${student.id}/profile`)}
+                                                    title="Ver Perfil"
+                                                    className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors"
+                                                >
+                                                    <UserCircle className="w-4 h-4" />
+                                                </button>
                                                 <button
                                                     onClick={() => navigate(`/admin/anamnesis?studentId=${student.id}`)}
                                                     title="Fazer Anamnese"
