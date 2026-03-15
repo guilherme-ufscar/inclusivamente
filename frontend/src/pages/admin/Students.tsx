@@ -452,10 +452,11 @@ export default function StudentsPage() {
                                             value={formData.persona}
                                             onChange={e => setFormData({ ...formData, persona: Number(e.target.value) })}
                                         >
-                                            <option value={0}>0 - Default (Sem diagnóstico restrito)</option>
-                                            <option value={1}>1 - TEA</option>
-                                            <option value={2}>2 - TEA + DI</option>
-                                            <option value={3}>3 - DI + TEA</option>
+                                            <option value={0}>0 – Padrão (sem diagnóstico restrito)</option>
+                                            <option value={1}>1 – TEA Nível 2</option>
+                                            <option value={2}>2 – DI Leve + TEA</option>
+                                            <option value={3}>3 – DI Severa + Motora</option>
+                                            <option value={4}>4 – Deficiência Visual</option>
                                         </select>
                                     </div>
                                     <div className="space-y-1 flex flex-col justify-end">

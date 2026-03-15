@@ -14,6 +14,11 @@ router.post('/', authorize(['admin', 'school']), createStudent);
 router.put('/:id', authorize(['admin', 'school']), updateStudent);
 router.delete('/:id', authorize(['admin', 'school']), deleteStudent);
 
+// Sondagem de Perfil
+import { submitSondagem, getSondagemStatus } from '../sondagem/sondagem.controller';
+router.get('/:id/sondagem', getSondagemStatus);
+router.post('/:id/sondagem', authorize(['admin', 'school']), submitSondagem);
+
 // Nested Anamnesis Routes
 router.get('/:id/anamnesis', getStudentAnamnesis);
 router.post('/:id/anamnesis/responses', createStudentAnamnesisResponse);

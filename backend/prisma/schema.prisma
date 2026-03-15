@@ -157,7 +157,10 @@ model Student {
   user_id             String?            @unique
   user                User?              @relation("UserStudent", fields: [user_id], references: [id])
   coins               Int                @default(0)
-  persona             Int                @default(0) // 0: padrão, 1: DI, 2: TEA
+  persona             Int                @default(0) // 0: padrão, 2: TEA Nível 2, 9: DI Leve+TEA, 11: DI Severa+Motora
+  sondagem_completed  Boolean            @default(false)
+  sondagem_score      Int?               // Pontuação total (0-400)
+  sondagem_perfil     Int?               // 1=TEA Nível 2, 2=DI Leve+TEA, 3=DI Severa+Motora, 4=Baixa Complexidade
   created_at          DateTime           @default(now())
   updated_at          DateTime           @updatedAt
 
@@ -255,6 +258,7 @@ model ActivityLog {
   tutor_intervention_needed InterventionNeeded?
   tutor_observations        String?
   tutor_recommendation      TutorRecommendation?
+  bncc_codigo               String?
   created_at                DateTime             @default(now())
   updated_at                DateTime             @updatedAt
 }

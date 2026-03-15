@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
  */
 export const handleGamesWebhook = async (req: Request, res: Response) => {
     try {
-        const { log_id, time_spent, errors_count, correct_count, difficulty_perceived, webhook_secret } = req.body;
+        const { log_id, time_spent, errors_count, correct_count, difficulty_perceived, bncc_codigo, webhook_secret } = req.body;
 
         // Validação simples de segredo para evitar abusos no webhook público
         if (webhook_secret !== process.env.GAMES_WEBHOOK_SECRET && process.env.NODE_ENV === 'production') {
@@ -27,7 +27,8 @@ export const handleGamesWebhook = async (req: Request, res: Response) => {
                 time_spent: Number(time_spent) || 0,
                 errors_count: Number(errors_count) || 0,
                 correct_count: Number(correct_count) || 0,
-                difficulty_perceived: (difficulty_perceived as Difficulty) || 'medium'
+                difficulty_perceived: (difficulty_perceived as Difficulty) || 'medium',
+                bncc_codigo: bncc_codigo || null
             }
         });
 

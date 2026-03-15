@@ -5,7 +5,7 @@ import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
-import { Plus, Pencil, Trash2, Search, Users2, UserCircle } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Users2, UserCircle, ClipboardList, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface Tutor {
@@ -30,6 +30,7 @@ interface Student {
     rg: string;
     needs_tutor: boolean;
     persona: number;
+    sondagem_completed: boolean;
     School?: { name: string };
     class?: { name: string };
     Tutors?: { id: string; name: string }[];
@@ -279,14 +280,20 @@ export default function SchoolStudents() {
                             ) : filtered.map(student => (
                                 <tr key={student.id} className="hover:bg-slate-50/50 transition-colors">
                                     <td className="px-6 py-4 font-medium text-slate-900 flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-brand-secondary/10 border border-brand-secondary/20 flex items-center justify-center font-bold text-brand-secondary">
-                                            {student.name.charAt(0)}
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold border ${student.sondagem_completed ? 'bg-brand-secondary/10 border-brand-secondary/20 text-brand-secondary' : 'bg-red-50 border-red-200 text-red-400'}`}>
+                                            {student.sondagem_completed ? student.name.charAt(0) : <Lock className="w-4 h-4" />}
                                         </div>
                                         <div>
                                             <span className="block">{student.name}</span>
-                                            <span className="block text-xs text-slate-400 font-normal">
-                                                Nascimento: {new Date(student.birth_date).toLocaleDateString('pt-BR')}
-                                            </span>
+                                            {!student.sondagem_completed ? (
+                                                <span className="inline-flex items-center gap-1 mt-0.5 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[10px] font-bold uppercase">
+                                                    <Lock className="w-2.5 h-2.5" /> Perfil bloqueado – sondagem pendente
+                                                </span>
+                                            ) : (
+                                                <span className="block text-xs text-slate-400 font-normal">
+                                                    Nascimento: {new Date(student.birth_date).toLocaleDateString('pt-BR')}
+                                                </span>
+                                            )}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-slate-600 font-medium">{student.class?.name || 'Sem turma'}</td>
@@ -313,6 +320,16 @@ export default function SchoolStudents() {
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
+                                            {!student.sondagem_completed && (
+                                                <button
+                                                    onClick={() => navigate(`/school/students/${student.id}/sondagem`)}
+                                                    title="Responder Sondagem"
+                                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
+                                                >
+                                                    <ClipboardList className="w-3.5 h-3.5" />
+                                                    Responder Sondagem
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={() => navigate(`/school/students/${student.id}/profile`)}
                                                 title="Ver Perfil"
@@ -392,10 +409,11 @@ export default function SchoolStudents() {
                                             value={formData.persona}
                                             onChange={e => setFormData({ ...formData, persona: Number(e.target.value) })}
                                         >
-                                            <option value={0}>0 - Default (Sem diagnóstico restrito)</option>
-                                            <option value={1}>1 - TEA</option>
-                                            <option value={2}>2 - TEA + DI</option>
-                                            <option value={3}>3 - DI + TEA</option>
+                                            <option value={0}>0 – Padrão (sem diagnóstico restrito)</option>
+                                            <option value={1}>1 – TEA Nível 2</option>
+                                            <option value={2}>2 – DI Leve + TEA</option>
+                                            <option value={3}>3 – DI Severa + Motora</option>
+                                            <option value={4}>4 – Deficiência Visual</option>
                                         </select>
                                     </div>
                                     <div className="space-y-1 flex flex-col justify-end">

@@ -6,7 +6,7 @@ import {
     ArrowLeft, User, GraduationCap, School, Calendar, Heart, Brain,
     Activity, CheckCircle2, XCircle, Clock, TrendingUp, TrendingDown,
     AlertTriangle, Star, BookOpen, Users, FileText, Coins, ChevronDown,
-    ChevronUp, Filter, Minus
+    ChevronUp, Filter, Minus, Lock, ClipboardList
 } from 'lucide-react';
 import {
     Chart as ChartJS,
@@ -34,6 +34,9 @@ interface StudentDetail {
     status?: string;
     coins?: number;
     persona?: number;
+    sondagem_completed?: boolean;
+    sondagem_score?: number;
+    sondagem_perfil?: number;
     School?: { name: string };
     class?: { name: string };
     Tutors?: Array<{ id: string; name: string }>;
@@ -139,8 +142,10 @@ const recLabel = (r?: string) => {
 };
 
 const personaLabel = (p?: number) => {
-    if (p === 1) return 'DI';
-    if (p === 2) return 'TEA';
+    if (p === 1) return 'TEA Nível 2';
+    if (p === 2) return 'DI Leve + TEA';
+    if (p === 3) return 'DI Severa + Motora';
+    if (p === 4) return 'Deficiência Visual';
     return 'Padrão';
 };
 
@@ -379,8 +384,34 @@ export default function StudentProfilePage() {
         );
     }
 
+    const isSchool = location.pathname.startsWith('/school');
+
     return (
         <div className="space-y-6 pb-12">
+            {/* ── Banner de Bloqueio ────────────────────────────────────── */}
+            {!student.sondagem_completed && (
+                <div className="flex items-center justify-between gap-4 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
+                            <Lock className="w-5 h-5 text-red-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-bold text-red-700">Perfil bloqueado – Sondagem pendente</p>
+                            <p className="text-xs text-red-500 mt-0.5">Este aluno não pode acessar a plataforma de jogos até que a sondagem de perfil seja respondida.</p>
+                        </div>
+                    </div>
+                    {isSchool && (
+                        <button
+                            onClick={() => navigate(`/school/students/${student.id}/sondagem`)}
+                            className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl whitespace-nowrap transition-colors shrink-0"
+                        >
+                            <ClipboardList className="w-4 h-4" />
+                            Responder Sondagem
+                        </button>
+                    )}
+                </div>
+            )}
+
             {/* ── Header ───────────────────────────────────────────────── */}
             <div className="flex items-start gap-4">
                 <button
