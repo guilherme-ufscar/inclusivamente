@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import api from '../../services/api';
 
 const DOMINIOS = [
@@ -130,7 +130,6 @@ const DOMINIOS = [
     },
 ];
 
-// Observações da deficiência visual (checklist qualitativo)
 const DEF_VISUAL_BARREIRAS = [
     'Tamanho inadequado de fonte',
     'Contraste insuficiente',
@@ -155,25 +154,57 @@ const PERFIL_LABELS: Record<number, { label: string; color: string; desc: string
     5: { label: 'Perfil 5 – Deficiência Visual', color: 'text-amber-700 bg-amber-100', desc: 'Acessibilidade visual + recursos de ampliação e contraste + autonomia digital monitorada' },
 };
 
-// Etapa especial de Deficiência Visual (índice 5)
 const DEF_VISUAL_TAB = 5;
+const STORAGE_KEY = (id: string) => `sondagem_draft_${id}`;
 
 export default function Sondagem() {
     const { studentId } = useParams<{ studentId: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Determina URL de volta com base na rota atual
+    const backUrl = location.pathname.startsWith('/admin')
+        ? '/admin/sondagem'
+        : '/school/sondagem';
 
     const [dominioAtual, setDominioAtual] = useState(0);
     const [scores, setScores] = useState<(number | null)[]>(Array(100).fill(null));
-
-    // Deficiência Visual
-    const [defVisual, setDefVisual] = useState<boolean | null>(null); // null = não respondido
+    const [defVisual, setDefVisual] = useState<boolean | null>(null);
     const [dvAutonomia, setDvAutonomia] = useState('');
     const [dvBarreiras, setDvBarreiras] = useState<string[]>([]);
     const [dvAcessoVisual, setDvAcessoVisual] = useState('');
-
     const [enviando, setEnviando] = useState(false);
     const [resultado, setResultado] = useState<{ score: number; perfil: number; persona: number; deficiencia_visual: boolean } | null>(null);
     const [erro, setErro] = useState('');
+    const [salvando, setSalvando] = useState(false);
+
+    // ── Carregar rascunho do localStorage ao montar ──────────────────────────
+    useEffect(() => {
+        if (!studentId) return;
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY(studentId));
+            if (raw) {
+                const draft = JSON.parse(raw);
+                if (draft.scores) setScores(draft.scores);
+                if (draft.defVisual !== undefined) setDefVisual(draft.defVisual);
+                if (draft.dvAutonomia) setDvAutonomia(draft.dvAutonomia);
+                if (draft.dvBarreiras) setDvBarreiras(draft.dvBarreiras);
+                if (draft.dvAcessoVisual) setDvAcessoVisual(draft.dvAcessoVisual);
+                if (draft.dominioAtual !== undefined) setDominioAtual(draft.dominioAtual);
+            }
+        } catch {}
+    }, [studentId]);
+
+    // ── Auto-salvar no localStorage a cada mudança ───────────────────────────
+    useEffect(() => {
+        if (!studentId) return;
+        const draft = { scores, defVisual, dvAutonomia, dvBarreiras, dvAcessoVisual, dominioAtual };
+        localStorage.setItem(STORAGE_KEY(studentId), JSON.stringify(draft));
+        // Feedback visual de "salvo"
+        setSalvando(true);
+        const t = setTimeout(() => setSalvando(false), 800);
+        return () => clearTimeout(t);
+    }, [scores, defVisual, dvAutonomia, dvBarreiras, dvAcessoVisual, dominioAtual]);
 
     const offsetDominio = DOMINIOS.slice(0, dominioAtual).reduce((acc, d) => acc + d.questoes.length, 0);
     const questoesDominio = dominioAtual < DOMINIOS.length ? DOMINIOS[dominioAtual].questoes : [];
@@ -188,7 +219,7 @@ export default function Sondagem() {
 
     const dominioCompleto = dominioAtual < DOMINIOS.length
         ? questoesDominio.every((_, i) => scores[offsetDominio + i] !== null)
-        : defVisual !== null; // etapa def visual completa se respondeu sim/não
+        : defVisual !== null;
 
     const totalRespondidas = scores.filter(s => s !== null).length;
     const progresso = Math.round((totalRespondidas / 100) * 100);
@@ -213,6 +244,8 @@ export default function Sondagem() {
                 scores,
                 deficiencia_visual: defVisual,
             });
+            // Limpar rascunho após envio bem-sucedido
+            if (studentId) localStorage.removeItem(STORAGE_KEY(studentId));
             setResultado(res.data.data);
         } catch {
             setErro('Erro ao enviar sondagem. Tente novamente.');
@@ -239,10 +272,10 @@ export default function Sondagem() {
                     </div>
                     <p className="text-gray-600 text-sm mb-8">{p.desc}</p>
                     <button
-                        onClick={() => navigate(-1)}
+                        onClick={() => navigate(backUrl)}
                         className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 font-medium"
                     >
-                        Voltar ao perfil do aluno
+                        Voltar para Sondagem
                     </button>
                 </div>
             </div>
@@ -254,21 +287,35 @@ export default function Sondagem() {
         return d.questoes.every((_, j) => scores[off + j] !== null);
     });
 
+    const hasDraft = scores.some(s => s !== null);
+
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
             <div className="bg-white border-b px-6 py-4 flex items-center justify-between sticky top-0 z-10">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => navigate(-1)} className="text-gray-400 hover:text-gray-600 text-xl">←</button>
+                    <button
+                        onClick={() => navigate(backUrl)}
+                        className="text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                        ←
+                    </button>
                     <div>
                         <h1 className="text-lg font-bold text-gray-800">Sondagem de Perfil Educacional</h1>
                         <p className="text-xs text-gray-500">Instrumento de Avaliação Educacional Funcional</p>
                     </div>
                 </div>
-                <div className="text-right">
-                    <p className="text-sm text-gray-500">{totalRespondidas} / 100 respondidas</p>
-                    <div className="w-40 bg-gray-200 rounded-full h-2 mt-1">
-                        <div className="bg-indigo-500 h-2 rounded-full transition-all" style={{ width: `${progresso}%` }} />
+                <div className="flex items-center gap-4">
+                    {hasDraft && (
+                        <span className={`text-xs transition-colors ${salvando ? 'text-amber-500' : 'text-green-600'}`}>
+                            {salvando ? '💾 Salvando...' : '✓ Rascunho salvo'}
+                        </span>
+                    )}
+                    <div className="text-right">
+                        <p className="text-sm text-gray-500">{totalRespondidas} / 100 respondidas</p>
+                        <div className="w-40 bg-gray-200 rounded-full h-2 mt-1">
+                            <div className="bg-indigo-500 h-2 rounded-full transition-all" style={{ width: `${progresso}%` }} />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -295,7 +342,6 @@ export default function Sondagem() {
                             </button>
                         );
                     })}
-                    {/* Tab especial Deficiência Visual */}
                     <button
                         onClick={() => setDominioAtual(DEF_VISUAL_TAB)}
                         className={`whitespace-nowrap px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
@@ -310,13 +356,15 @@ export default function Sondagem() {
                     </button>
                 </div>
 
-                {/* Escala de referência (só nas etapas de domínio) */}
+                {/* Escala de referência */}
                 {dominioAtual < DOMINIOS.length && (
                     <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4 mb-6">
                         <p className="text-xs font-semibold text-indigo-700 mb-2 uppercase tracking-wide">Escala de Respostas</p>
                         <div className="flex flex-wrap gap-3">
                             {ESCALA.map(e => (
-                                <span key={e.value} className="text-xs text-indigo-600"><strong>{e.value}</strong> – {e.label.split('–')[1].trim()}</span>
+                                <span key={e.value} className="text-xs text-indigo-600">
+                                    <strong>{e.value}</strong> – {e.label.split('–')[1].trim()}
+                                </span>
                             ))}
                         </div>
                     </div>
@@ -332,8 +380,6 @@ export default function Sondagem() {
                                 independentemente da pontuação obtida nas demais etapas.
                             </p>
                         </div>
-
-                        {/* Pergunta principal */}
                         <div className="border rounded-xl p-4 bg-amber-50 border-amber-200">
                             <p className="text-sm font-semibold text-amber-800 mb-3">
                                 O aluno possui diagnóstico de baixa visão, visão subnormal ou dificuldades visuais significativas?
@@ -353,8 +399,6 @@ export default function Sondagem() {
                                 </button>
                             </div>
                         </div>
-
-                        {/* Observações adicionais (só se sim) */}
                         {defVisual === true && (
                             <div className="space-y-5">
                                 <div>
@@ -362,37 +406,23 @@ export default function Sondagem() {
                                     <div className="flex flex-col gap-2">
                                         {['Autonomia plena', 'Autonomia parcial', 'Necessita mediação'].map(op => (
                                             <label key={op} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${dvAutonomia === op ? 'border-amber-400 bg-amber-50' : 'border-gray-200 hover:border-amber-300'}`}>
-                                                <input
-                                                    type="radio"
-                                                    name="dvAutonomia"
-                                                    value={op}
-                                                    checked={dvAutonomia === op}
-                                                    onChange={() => setDvAutonomia(op)}
-                                                    className="text-amber-500"
-                                                />
+                                                <input type="radio" name="dvAutonomia" value={op} checked={dvAutonomia === op} onChange={() => setDvAutonomia(op)} className="text-amber-500" />
                                                 <span className="text-sm text-gray-700">{op}</span>
                                             </label>
                                         ))}
                                     </div>
                                 </div>
-
                                 <div>
                                     <p className="text-sm font-semibold text-gray-700 mb-2">Barreiras de acessibilidade identificadas (opcional)</p>
                                     <div className="grid grid-cols-1 gap-2">
                                         {DEF_VISUAL_BARREIRAS.map(b => (
                                             <label key={b} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${dvBarreiras.includes(b) ? 'border-amber-400 bg-amber-50' : 'border-gray-200 hover:border-amber-300'}`}>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={dvBarreiras.includes(b)}
-                                                    onChange={() => toggleBarreira(b)}
-                                                    className="text-amber-500 rounded"
-                                                />
+                                                <input type="checkbox" checked={dvBarreiras.includes(b)} onChange={() => toggleBarreira(b)} className="text-amber-500 rounded" />
                                                 <span className="text-sm text-gray-700">{b}</span>
                                             </label>
                                         ))}
                                     </div>
                                 </div>
-
                                 <div>
                                     <p className="text-sm font-semibold text-gray-700 mb-2">Observações sobre acesso visual ao conteúdo (opcional)</p>
                                     <textarea
@@ -405,7 +435,6 @@ export default function Sondagem() {
                                 </div>
                             </div>
                         )}
-
                         {defVisual === false && (
                             <p className="text-sm text-gray-500 bg-gray-50 rounded-xl p-4 border">
                                 Nenhum indicativo de deficiência visual. O perfil será determinado pela pontuação da sondagem.
