@@ -15,7 +15,7 @@ function calcularPerfil(score: number): { perfil: number; persona: number } {
 
 export const submitSondagem = async (req: AuthRequest, res: Response) => {
     try {
-        const { id: student_id } = req.params;
+        const student_id = req.params.id as string;
         const { scores, deficiencia_visual } = req.body as {
             scores: number[];
             deficiencia_visual?: boolean;
@@ -81,7 +81,7 @@ export const submitSondagem = async (req: AuthRequest, res: Response) => {
 
 export const getSondagemStatus = async (req: AuthRequest, res: Response) => {
     try {
-        const { id: student_id } = req.params;
+        const student_id = req.params.id as string;
 
         const student = await prisma.student.findUnique({
             where: { id: student_id },
