@@ -50,6 +50,7 @@ export default function AppLayout({ children }: LayoutProps) {
                 { name: 'Alunos', icon: Users2, path: '/admin/students' },
                 { name: 'Tutores', icon: HeartHandshake, path: '/admin/staff' },
                 { category: 'Acompanhamento' },
+                { name: 'Sondagem', icon: ClipboardList, path: '/admin/sondagem' },
                 { name: 'Atividades', icon: BrainCircuit, path: '/admin/activities' },
                 { name: 'Relatórios', icon: FileText, path: '/admin/reports' },
                 { name: 'Check-ins', icon: MessageSquare, path: '/admin/checkins' },
@@ -80,7 +81,7 @@ export default function AppLayout({ children }: LayoutProps) {
                 { name: 'Tutores', icon: HeartHandshake, path: '/school/tutors' },
                 { name: 'Responsáveis', icon: Users, path: '/school/guardians' },
                 { category: 'Pedagógico' },
-                { name: 'Sondagem Pedagógica', icon: ClipboardList, path: '/school/anamnesis' },
+                { name: 'Sondagem', icon: ClipboardList, path: '/school/sondagem' },
                 { name: 'Atividades', icon: BrainCircuit, path: '/school/activities' },
                 { category: 'Acompanhamento' },
                 { name: 'Relatórios', icon: FileText, path: '/school/reports' },
@@ -143,7 +144,7 @@ export default function AppLayout({ children }: LayoutProps) {
                         </div>
                         <div className="ml-3 overflow-hidden">
                             <p className="text-sm font-medium text-slate-900 truncate">{user?.name}</p>
-                            <p className="text-xs text-slate-500 capitalize">{user?.role}</p>
+                            <p className="text-xs text-slate-500 capitalize">{user?.role === 'school' ? 'Escola' : user?.role === 'admin' ? 'Administrador' : user?.role === 'tutor' ? 'Tutor' : user?.role}</p>
                         </div>
                     </div>
                     <button

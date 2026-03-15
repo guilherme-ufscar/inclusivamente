@@ -9,16 +9,18 @@ export default function SchoolDashboard() {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [stats, setStats] = useState({ students: 0, tutors: 0, classes: 0, activities: 0 });
+    const [schoolName, setSchoolName] = useState('');
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const schoolId = user?.school_id;
-                const [studentsRes, tutorsRes, classesRes] = await Promise.all([
+                const [studentsRes, tutorsRes, classesRes, schoolRes] = await Promise.all([
                     api.get('/students', { params: { school_id: schoolId } }),
                     api.get(`/schools/${schoolId}/tutors`),
-                    api.get('/classes', { params: { school_id: schoolId } })
+                    api.get('/classes', { params: { school_id: schoolId } }),
+                    api.get(`/schools/${schoolId}`),
                 ]);
 
                 setStats({
@@ -27,6 +29,8 @@ export default function SchoolDashboard() {
                     classes: classesRes.data.data?.length || 0,
                     activities: 0
                 });
+                const school = schoolRes.data.data || schoolRes.data;
+                setSchoolName(school?.name || '');
             } catch (error) {
                 console.error('Failed to load school dashboard data', error);
             } finally {
@@ -51,8 +55,10 @@ export default function SchoolDashboard() {
                         <GraduationCap className="w-8 h-8" />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-heading font-bold text-slate-900 tracking-tight">Painel da Escola</h1>
-                        <p className="text-slate-500 mt-1">Bem-vindo(a) ao painel de gestão escolar.</p>
+                        <h1 className="text-3xl font-heading font-bold text-slate-900 tracking-tight">
+                            {schoolName ? schoolName : 'Painel da Escola'}
+                        </h1>
+                        <p className="text-slate-500 mt-1">Bem-vindo(a) ao painel de gestão{schoolName ? ` de ${schoolName}` : ' escolar'}.</p>
                     </div>
                 </div>
             </div>

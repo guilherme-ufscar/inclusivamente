@@ -37,6 +37,7 @@ import SchoolActivitiesPage from './pages/school/Activities';
 import SchoolReportsPage from './pages/school/Reports';
 import SchoolGuardiansPage from './pages/school/Guardians';
 import SchoolSondagemPage from './pages/school/Sondagem';
+import SondagemListPage from './pages/SondagemList';
 
 const ProtectedRoute = ({ children, allowedRoles }: { children: JSX.Element, allowedRoles?: string[] }) => {
   const { user, token, isLoading } = useAuth();
@@ -67,6 +68,8 @@ const AppRoutes = () => {
       <Route path="/admin/schools" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><SchoolsPage /></AppLayout></ProtectedRoute>} />
       <Route path="/admin/staff" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><StaffPage /></AppLayout></ProtectedRoute>} />
       <Route path="/admin/students" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><StudentsPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/sondagem" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><SondagemListPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/students/:studentId/sondagem" element={<ProtectedRoute allowedRoles={['admin']}><SchoolSondagemPage /></ProtectedRoute>} />
       <Route path="/admin/students/:id/profile" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><StudentProfilePage /></AppLayout></ProtectedRoute>} />
       <Route path="/admin/activities" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><ActivitiesPage /></AppLayout></ProtectedRoute>} />
       <Route path="/admin/reports" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><ReportsPage /></AppLayout></ProtectedRoute>} />
@@ -91,6 +94,7 @@ const AppRoutes = () => {
       <Route path="/school/students/:studentId/sondagem" element={<ProtectedRoute allowedRoles={['school']}><SchoolSondagemPage /></ProtectedRoute>} />
       <Route path="/school/tutors" element={<ProtectedRoute allowedRoles={['school']}><AppLayout><SchoolTutorsPage /></AppLayout></ProtectedRoute>} />
       <Route path="/school/classes" element={<ProtectedRoute allowedRoles={['school']}><AppLayout><SchoolClassesPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/school/sondagem" element={<ProtectedRoute allowedRoles={['school']}><AppLayout><SondagemListPage /></AppLayout></ProtectedRoute>} />
       <Route path="/school/anamnesis" element={<ProtectedRoute allowedRoles={['school']}><AppLayout><SchoolAnamnesisPage /></AppLayout></ProtectedRoute>} />
       <Route path="/school/activities" element={<ProtectedRoute allowedRoles={['school']}><AppLayout><SchoolActivitiesPage /></AppLayout></ProtectedRoute>} />
       <Route path="/school/reports" element={<ProtectedRoute allowedRoles={['school']}><AppLayout><SchoolReportsPage /></AppLayout></ProtectedRoute>} />

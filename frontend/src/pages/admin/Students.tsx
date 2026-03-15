@@ -4,7 +4,7 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Modal from '../../components/ui/Modal';
 import api from '../../services/api';
-import { Plus, Pencil, Trash2, Search, GraduationCap, ClipboardEdit, UserCircle } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, GraduationCap, ClipboardEdit, UserCircle, Lock, ClipboardList } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface Student {
@@ -18,6 +18,8 @@ interface Student {
     rg?: string;
     persona?: number;
     needs_tutor?: boolean;
+    sondagem_completed?: boolean;
+    sondagem_perfil?: number;
     School?: { name: string };
     class?: { name: string };
     Tutors?: Array<{ id: string, name: string }>;
@@ -305,14 +307,20 @@ export default function StudentsPage() {
                                 students.map((student) => (
                                     <tr key={student.id} className="hover:bg-slate-50/50 transition-colors">
                                         <td className="px-6 py-4 font-medium text-slate-900 flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-brand-secondary/10 border border-brand-secondary/20 flex items-center justify-center font-bold text-brand-secondary">
-                                                {student.name.charAt(0)}
+                                            <div className={`w-10 h-10 rounded-full border flex items-center justify-center font-bold ${student.sondagem_completed ? 'bg-brand-secondary/10 border-brand-secondary/20 text-brand-secondary' : 'bg-red-50 border-red-200 text-red-400'}`}>
+                                                {student.sondagem_completed ? student.name.charAt(0) : <Lock className="w-4 h-4" />}
                                             </div>
                                             <div>
                                                 <span className="block">{student.name}</span>
-                                                <span className="block text-xs text-slate-400 font-normal">
-                                                    Nascimento: {new Date(student.birth_date).toLocaleDateString('pt-BR')}
-                                                </span>
+                                                {!student.sondagem_completed ? (
+                                                    <span className="inline-flex items-center gap-1 mt-0.5 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[10px] font-bold uppercase">
+                                                        <Lock className="w-2.5 h-2.5" /> Sondagem pendente
+                                                    </span>
+                                                ) : (
+                                                    <span className="block text-xs text-slate-400 font-normal">
+                                                        Nascimento: {new Date(student.birth_date).toLocaleDateString('pt-BR')}
+                                                    </span>
+                                                )}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-slate-600 font-medium">
@@ -356,6 +364,15 @@ export default function StudentsPage() {
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
+                                                {!student.sondagem_completed && (
+                                                    <button
+                                                        onClick={() => navigate(`/admin/sondagem?studentId=${student.id}`)}
+                                                        title="Responder Sondagem"
+                                                        className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-semibold text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
+                                                    >
+                                                        <ClipboardList className="w-3.5 h-3.5" /> Sondagem
+                                                    </button>
+                                                )}
                                                 <button
                                                     onClick={() => navigate(`/admin/students/${student.id}/profile`)}
                                                     title="Ver Perfil"
