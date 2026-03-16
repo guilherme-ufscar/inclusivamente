@@ -64,13 +64,15 @@ export const finishActivity = async (req: Request | any, res: Response) => {
             activity_id, activityId, // parameters coming from Unity/Game
             has_tutor, hasTutor,
             tutor_id, tutorId,
-            student_id, studentId
+            student_id, studentId,
+            bncc_codigo, bnccCodigo
         } = req.body;
 
         time_spent = time_spent ?? timeSpent;
         errors_count = errors_count ?? errorsCount;
         correct_count = correct_count ?? correctCount;
         difficulty_perceived = difficulty_perceived ?? difficultyPerceived;
+        bncc_codigo = bncc_codigo ?? bnccCodigo;
 
         let final_activity_id = activity_id ?? activityId;
 
@@ -107,7 +109,8 @@ export const finishActivity = async (req: Request | any, res: Response) => {
                     time_spent: time_spent !== undefined ? Number(time_spent) : undefined,
                     errors_count: errors_count !== undefined ? Number(errors_count) : undefined,
                     correct_count: correct_count !== undefined ? Number(correct_count) : undefined,
-                    difficulty_perceived: diff
+                    difficulty_perceived: diff,
+                    bncc_codigo: bncc_codigo || null
                 }
             });
             return res.status(200).json({ success: true, data: log, message: 'Activity finished' });
@@ -154,7 +157,8 @@ export const finishActivity = async (req: Request | any, res: Response) => {
                 time_spent: time_spent !== undefined ? Number(time_spent) : undefined,
                 errors_count: errors_count !== undefined ? Number(errors_count) : undefined,
                 correct_count: correct_count !== undefined ? Number(correct_count) : undefined,
-                difficulty_perceived: diff
+                difficulty_perceived: diff,
+                bncc_codigo: bncc_codigo || null
             }
         });
 
