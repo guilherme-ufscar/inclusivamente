@@ -6,6 +6,11 @@
   "scripts": {
     "test": "jest",
     "seed": "ts-node src/database/seeds/seed.ts",
+    "seed:1ano": "ts-node src/database/seeds/seed-1ano.ts",
+    "seed:2ano": "ts-node src/database/seeds/seed-2ano.ts",
+    "seed:3ano": "ts-node src/database/seeds/seed-3ano.ts",
+    "seed:4ano": "ts-node src/database/seeds/seed-4ano.ts",
+    "seed:5ano": "ts-node src/database/seeds/seed-5ano.ts",
     "dev": "nodemon src/server.ts"
   },
   "keywords": [],
