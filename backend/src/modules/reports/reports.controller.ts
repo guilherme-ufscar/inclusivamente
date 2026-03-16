@@ -66,7 +66,9 @@ export const generateStudentReport = async (req: Request | any, res: Response) =
             take: 10
         });
 
-        if (lastActivitiesWithTutor.length > 0) {
+        const isAdmin = req.user?.role === 'admin';
+
+        if (lastActivitiesWithTutor.length > 0 && !isAdmin) {
             const evaluated = lastActivitiesWithTutor.filter(l => l.autonomy_level !== null).length;
             const evaluationRate = evaluated / lastActivitiesWithTutor.length;
 
