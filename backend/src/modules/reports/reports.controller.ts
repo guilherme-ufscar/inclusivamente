@@ -142,87 +142,57 @@ export const generateStudentReport = async (req: Request | any, res: Response) =
         else if (autonomy_percentage < 30) tutorLevel = 'continuous';
 
         // ─── CRUZAMENTO BNCC ──────────────────────────────────────────────────
-        // Coleta códigos BNCC únicos presentes nas atividades do período
-        const bnccCodes = [...new Set(logs.map(l => l.bncc_codigo).filter(Boolean))] as string[];
+        const anyLogs = logs as any[];
+        const bnccCodes = [...new Set(anyLogs.map(l => l.bncc_codigo).filter(Boolean))] as string[];
 
-        let bnccContext = '';
+        interface BnccEnriched {
+            code: string;
+            habilidade?: string;
+            descricao?: string;
+            etapa?: string;
+            disciplina?: string;
+            disciplinasRelacionadas: string[];
+            pilulas: string[];
+            acertos: number;
+            erros: number;
+            atividadesCount: number;
+        }
+
+        let bnccEnriched: BnccEnriched[] = [];
         if (bnccCodes.length > 0) {
-            // Busca competências BNCC cadastradas
             const bnccCompetences = await prisma.bnccCompetence.findMany({
                 where: { code: { in: bnccCodes } }
             });
-
-            // Busca pílulas (chapters) cujo conteúdo referencia esses códigos BNCC
             const chaptersWithSubject = await prisma.chapter.findMany({
-                where: {
-                    OR: bnccCodes.map(code => ({ content: { contains: code } }))
-                },
+                where: { OR: bnccCodes.map(code => ({ content: { contains: code } })) },
                 include: { subject: true }
             });
 
-            // Monta contexto BNCC enriquecido para o prompt da IA
-            const bnccDetails = bnccCodes.map(code => {
+            bnccEnriched = bnccCodes.map(code => {
                 const competence = bnccCompetences.find(c => c.code === code);
                 const chapters = chaptersWithSubject.filter(ch => ch.content?.includes(code));
-                const logsForCode = logs.filter(l => l.bncc_codigo === code);
-                const totalAcertos = logsForCode.reduce((acc, l) => acc + (l.correct_count || 0), 0);
-                const totalErros = logsForCode.reduce((acc, l) => acc + (l.errors_count || 0), 0);
-
-                let detail = `\n• Código BNCC: ${code}`;
-                if (competence) {
-                    detail += `\n  Habilidade: ${competence.title}`;
-                    detail += `\n  Descrição: ${competence.description}`;
-                    detail += `\n  Etapa: ${competence.stage} | Disciplina: ${competence.subject}`;
-                }
-                if (chapters.length > 0) {
-                    const subjects = [...new Set(chapters.map(ch => ch.subject?.name).filter(Boolean))];
-                    const pillNames = chapters.map(ch => ch.name).join(', ');
-                    detail += `\n  Disciplinas relacionadas: ${subjects.join(', ')}`;
-                    detail += `\n  Pílulas (conteúdo): ${pillNames}`;
-                }
-                detail += `\n  Desempenho neste código: ${totalAcertos} acertos / ${totalErros} erros (${logsForCode.length} atividade(s))`;
-                return detail;
-            }).join('\n');
-
-            bnccContext = `\n\nCOMPETÊNCIAS BNCC TRABALHADAS NO PERÍODO:${bnccDetails}`;
+                const logsForCode = anyLogs.filter(l => l.bncc_codigo === code);
+                return {
+                    code,
+                    habilidade: competence?.title ?? undefined,
+                    descricao: competence?.description ?? undefined,
+                    etapa: competence?.stage ?? undefined,
+                    disciplina: competence?.subject ?? undefined,
+                    disciplinasRelacionadas: [...new Set(chapters.map(ch => ch.subject?.name).filter(Boolean))] as string[],
+                    pilulas: chapters.map(ch => ch.name),
+                    acertos: logsForCode.reduce((acc, l) => acc + (l.correct_count || 0), 0),
+                    erros: logsForCode.reduce((acc, l) => acc + (l.errors_count || 0), 0),
+                    atividadesCount: logsForCode.length,
+                };
+            });
         }
 
         // ─── GERAÇÃO DO RELATÓRIO ─────────────────────────────────────────────
         const count = logs.length;
-        let generatedSummary = `O aluno completou ${count} atividades. `;
+        let generatedSummary = '';
 
         if (count > 0) {
-            const contextData = logs.map(l =>
-                `Data: ${l.completed_at?.toLocaleDateString('pt-BR')} | BNCC: ${l.bncc_codigo || 'N/A'} | Acertos: ${l.correct_count} | Erros: ${l.errors_count} | Nível: ${l.difficulty_perceived || 'N/A'} | Autonomia: ${l.autonomy_level || 'N/A'} | Intervenção necessária: ${l.tutor_intervention_needed || 'N/A'} | Obs. tutor: ${l.tutor_observations || 'N/A'}`
-            ).join('\n');
-
-            if (process.env.GEMINI_API_KEY) {
-                try {
-                    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-                    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-                    const prompt = `Atue como um especialista pedagogo de educação inclusiva brasileira (BNCC).
-Analise o histórico de ${count} atividades do aluno e as competências BNCC trabalhadas abaixo.
-Gere um relatório analítico em 2 a 3 parágrafos claros, abordando:
-1. Desempenho geral: acertos, erros e dificuldades identificadas por competência BNCC;
-2. Relação entre o conteúdo das pílulas/disciplinas e o desempenho observado;
-3. Nível de autonomia, necessidade de intervenção e recomendação para o tutor, considerando as observações dos tutores.
-Seja objetivo, pedagógico e baseie-se nos dados fornecidos.
-
-HISTÓRICO DE ATIVIDADES:
-${contextData}
-${bnccContext}`;
-
-                    const result = await model.generateContent(prompt);
-                    generatedSummary = result.response.text();
-                } catch (e) {
-                    console.error('[GEMINI_ERROR] Failed to generate summary, falling back to heuristic:', e);
-                    generatedSummary += getHeuristicSummary(autonomy_percentage, logs);
-                    if (bnccContext) generatedSummary += ` Competências BNCC trabalhadas: ${bnccCodes.join(', ')}.`;
-                }
-            } else {
-                generatedSummary += getHeuristicSummary(autonomy_percentage, logs);
-                if (bnccContext) generatedSummary += ` Competências BNCC trabalhadas: ${bnccCodes.join(', ')}.`;
-            }
+            generatedSummary = buildHeuristicReport(autonomy_percentage, logs, bnccEnriched);
         } else {
             generatedSummary = 'Nenhuma atividade registrada no período selecionado.';
             tutorLevel = 'not_needed';
@@ -266,17 +236,89 @@ export const updateReport = async (req: Request, res: Response) => {
     }
 };
 
-function getHeuristicSummary(autonomy_percentage: number, logs: any[]) {
-    let summary = '';
-    const totalErrors = logs.reduce((acc, l) => acc + (l.errors_count || 0), 0);
-    const tutorObs = logs.filter(l => l.tutor_observations).map(l => l.tutor_observations).join('; ');
+interface BnccEnriched {
+    code: string;
+    habilidade?: string;
+    descricao?: string;
+    etapa?: string;
+    disciplina?: string;
+    disciplinasRelacionadas: string[];
+    pilulas: string[];
+    acertos: number;
+    erros: number;
+    atividadesCount: number;
+}
 
-    if (autonomy_percentage > 70) summary += 'Tem apresentado alto nível de autonomia e assertividade nas tarefas. ';
-    else if (autonomy_percentage < 30) summary += 'Apresenta forte dependência e necessita de mediação constante. ';
-    else summary += 'O desempenho é mediano, exigindo intervenções verbais pontuais na execução. ';
+function buildHeuristicReport(autonomy_percentage: number, logs: any[], bnccEnriched: BnccEnriched[]): string {
+    const count = logs.length;
+    const totalAcertos = logs.reduce((acc, l) => acc + (l.correct_count || 0), 0);
+    const totalErros = logs.reduce((acc, l) => acc + (l.errors_count || 0), 0);
+    const taxaAcerto = (totalAcertos + totalErros) > 0
+        ? Math.round((totalAcertos / (totalAcertos + totalErros)) * 100)
+        : null;
+    const tutorObsList = logs.filter(l => l.tutor_observations).map(l => l.tutor_observations);
+    const interventions = logs.filter(l => l.tutor_intervention_needed === true || l.tutor_intervention_needed === 'true').length;
+    const highDiff = logs.filter(l => l.difficulty_perceived === 'high').length;
 
-    if (totalErrors > logs.length * 3) summary += 'Foram notadas dificuldades que geraram alta taxa de erros. ';
+    // ── Parágrafo 1: desempenho geral + cruzamento BNCC ──────────────────────
+    let p1 = `No período analisado, o aluno realizou ${count} atividade${count !== 1 ? 's' : ''}, totalizando ${totalAcertos} acerto${totalAcertos !== 1 ? 's' : ''} e ${totalErros} erro${totalErros !== 1 ? 's' : ''}`;
+    if (taxaAcerto !== null) {
+        p1 += ` (taxa de acerto de ${taxaAcerto}%)`;
+    }
+    p1 += '.';
 
-    if (tutorObs.length > 0) summary += `Notas dos tutores destacam comportamentos importantes no período analisado.`;
-    return summary;
+    if (highDiff > 0) {
+        p1 += ` Em ${highDiff} atividade${highDiff !== 1 ? 's' : ''} o nível de dificuldade percebida foi elevado, sinalizando conteúdos que requerem atenção pedagógica adicional.`;
+    }
+
+    if (bnccEnriched.length > 0) {
+        p1 += ` As habilidades da Base Nacional Comum Curricular (BNCC) trabalhadas no período foram:`;
+        bnccEnriched.forEach(b => {
+            p1 += ` A competência ${b.code}`;
+            if (b.habilidade) p1 += ` — "${b.habilidade}"`;
+            if (b.disciplina || b.disciplinasRelacionadas.length > 0) {
+                const disc = b.disciplina || b.disciplinasRelacionadas.join(', ');
+                p1 += `, da disciplina de ${disc}`;
+            }
+            if (b.etapa) p1 += ` (${b.etapa})`;
+            if (b.descricao) p1 += `, que propõe ${b.descricao.charAt(0).toLowerCase() + b.descricao.slice(1)}`;
+            if (b.pilulas.length > 0) {
+                const pilulasStr = b.pilulas.slice(0, 2).join(' e ');
+                p1 += `, foi trabalhada por meio da${b.pilulas.length > 1 ? 's' : ''} pílula${b.pilulas.length > 1 ? 's' : ''} "${pilulasStr}"`;
+            }
+            const taxaB = (b.acertos + b.erros) > 0 ? Math.round((b.acertos / (b.acertos + b.erros)) * 100) : null;
+            p1 += `, com ${b.acertos} acerto${b.acertos !== 1 ? 's' : ''} e ${b.erros} erro${b.erros !== 1 ? 's' : ''} em ${b.atividadesCount} atividade${b.atividadesCount !== 1 ? 's' : ''}`;
+            if (taxaB !== null) p1 += ` (${taxaB}% de aproveitamento)`;
+            p1 += '.';
+        });
+    } else {
+        p1 += ' Não foram identificadas competências BNCC associadas às atividades do período.';
+    }
+
+    // ── Parágrafo 2: autonomia, intervenção e recomendação ───────────────────
+    let p2: string;
+    if (autonomy_percentage > 70) {
+        p2 = `Quanto à autonomia, o aluno demonstrou desempenho independente ao longo do período (${autonomy_percentage.toFixed(0)}% de autonomia), executando as tarefas com assertividade e com mínima necessidade de mediação externa.`;
+    } else if (autonomy_percentage < 30) {
+        p2 = `Quanto à autonomia, o aluno apresentou forte dependência de mediação ao longo do período (${autonomy_percentage.toFixed(0)}% de autonomia), necessitando de suporte constante para a realização das atividades.`;
+    } else {
+        p2 = `Quanto à autonomia, o aluno apresentou nível intermediário de independência (${autonomy_percentage.toFixed(0)}% de autonomia), com variações conforme o tipo de atividade e a complexidade do conteúdo.`;
+    }
+
+    if (interventions > 0) {
+        p2 += ` Foram registradas intervenções do tutor em ${interventions} atividade${interventions !== 1 ? 's' : ''}.`;
+    }
+    if (tutorObsList.length > 0) {
+        p2 += ` Os tutores registraram as seguintes observações: ${tutorObsList.slice(0, 3).join('; ')}.`;
+    }
+
+    if (autonomy_percentage > 70) {
+        p2 += ' Recomenda-se suporte tutorial esporádico ou dispensável, incentivando a consolidação da independência do aluno.';
+    } else if (autonomy_percentage < 30) {
+        p2 += ' Recomenda-se manutenção do suporte tutorial contínuo, com estratégias graduais de mediação para desenvolver progressivamente a autonomia.';
+    } else {
+        p2 += ' Recomenda-se suporte tutorial esporádico, com atenção especial às competências que apresentaram maior taxa de erros ou dificuldade percebida elevada.';
+    }
+
+    return `${p1}\n\n${p2}`;
 }
