@@ -74,8 +74,9 @@ export default function ReportsPage() {
             });
             setIsModalOpen(false);
             fetchReports();
-        } catch (err) {
-            alert('Erro ao gerar relatório (ou não há histórico de atividades suficiente).');
+        } catch (err: any) {
+            const msg = err?.response?.data?.message || 'Erro ao gerar relatório (ou não há histórico de atividades suficiente).';
+            alert(msg);
         } finally {
             setIsGenerating(false);
         }
