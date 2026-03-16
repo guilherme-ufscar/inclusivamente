@@ -161,7 +161,7 @@ export const generateStudentReport = async (req: Request | any, res: Response) =
             // Monta contexto BNCC enriquecido para o prompt da IA
             const bnccDetails = bnccCodes.map(code => {
                 const competence = bnccCompetences.find(c => c.code === code);
-                const chapters = chaptersWithSubject.filter(ch => ch.content.includes(code));
+                const chapters = chaptersWithSubject.filter(ch => ch.content?.includes(code));
                 const logsForCode = logs.filter(l => l.bncc_codigo === code);
                 const totalAcertos = logsForCode.reduce((acc, l) => acc + (l.correct_count || 0), 0);
                 const totalErros = logsForCode.reduce((acc, l) => acc + (l.errors_count || 0), 0);
