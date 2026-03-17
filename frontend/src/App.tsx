@@ -119,8 +119,6 @@ const AppRoutes = () => {
       <Route path="/school/video-aulas/:playlistId" element={<ProtectedRoute allowedRoles={['school']}><AppLayout><VideoPlayerPage /></AppLayout></ProtectedRoute>} />
       <Route path="/tutor/video-aulas" element={<ProtectedRoute allowedRoles={['tutor']}><AppLayout><VideoAulasPage /></AppLayout></ProtectedRoute>} />
       <Route path="/tutor/video-aulas/:playlistId" element={<ProtectedRoute allowedRoles={['tutor']}><AppLayout><VideoPlayerPage /></AppLayout></ProtectedRoute>} />
-      <Route path="/parent/video-aulas" element={<ProtectedRoute allowedRoles={['parent']}><AppLayout><VideoAulasPage /></AppLayout></ProtectedRoute>} />
-      <Route path="/parent/video-aulas/:playlistId" element={<ProtectedRoute allowedRoles={['parent']}><AppLayout><VideoPlayerPage /></AppLayout></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>

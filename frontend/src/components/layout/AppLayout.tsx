@@ -99,8 +99,6 @@ export default function AppLayout({ children }: LayoutProps) {
                 { category: 'Evolução' },
                 { name: 'Relatórios', icon: FileText, path: '/parent/reports' },
                 { name: 'Atividades Realizadas', icon: BrainCircuit, path: '/parent/activities' },
-                { category: 'Formação' },
-                { name: 'Video-Aulas', icon: PlaySquare, path: '/parent/video-aulas' },
             ];
         }
         return [];
