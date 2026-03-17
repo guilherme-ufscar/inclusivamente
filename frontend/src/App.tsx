@@ -38,6 +38,8 @@ import SchoolReportsPage from './pages/school/Reports';
 import SchoolGuardiansPage from './pages/school/Guardians';
 import SchoolSondagemPage from './pages/school/Sondagem';
 import SondagemListPage from './pages/SondagemList';
+import VideoAulasPage from './pages/VideoAulas';
+import VideoPlayerPage from './pages/VideoPlayer';
 
 const ProtectedRoute = ({ children, allowedRoles }: { children: JSX.Element, allowedRoles?: string[] }) => {
   const { user, token, isLoading } = useAuth();
@@ -109,6 +111,16 @@ const AppRoutes = () => {
       <Route path="/parent/dashboard" element={<ProtectedRoute allowedRoles={['parent']}><AppLayout><ParentDashboard /></AppLayout></ProtectedRoute>} />
       <Route path="/parent/reports" element={<ProtectedRoute allowedRoles={['parent']}><AppLayout><FamilyReportsPage /></AppLayout></ProtectedRoute>} />
       <Route path="/parent/activities" element={<ProtectedRoute allowedRoles={['parent']}><AppLayout><ActivitiesPage /></AppLayout></ProtectedRoute>} />
+
+      {/* Video-Aulas — disponível para todos os perfis */}
+      <Route path="/admin/video-aulas" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><VideoAulasPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/video-aulas/:playlistId" element={<ProtectedRoute allowedRoles={['admin']}><AppLayout><VideoPlayerPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/school/video-aulas" element={<ProtectedRoute allowedRoles={['school']}><AppLayout><VideoAulasPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/school/video-aulas/:playlistId" element={<ProtectedRoute allowedRoles={['school']}><AppLayout><VideoPlayerPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/tutor/video-aulas" element={<ProtectedRoute allowedRoles={['tutor']}><AppLayout><VideoAulasPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/tutor/video-aulas/:playlistId" element={<ProtectedRoute allowedRoles={['tutor']}><AppLayout><VideoPlayerPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/parent/video-aulas" element={<ProtectedRoute allowedRoles={['parent']}><AppLayout><VideoAulasPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/parent/video-aulas/:playlistId" element={<ProtectedRoute allowedRoles={['parent']}><AppLayout><VideoPlayerPage /></AppLayout></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>

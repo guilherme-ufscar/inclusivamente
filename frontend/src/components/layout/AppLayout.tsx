@@ -14,7 +14,8 @@ import {
     BrainCircuit,
     FileText,
     Image as ImageIcon,
-    ClipboardList
+    ClipboardList,
+    PlaySquare,
 } from 'lucide-react';
 import { useState } from 'react';
 import { clsx, type ClassValue } from 'clsx';
@@ -64,6 +65,8 @@ export default function AppLayout({ children }: LayoutProps) {
                 { name: 'Imagens', icon: ImageIcon, path: '/admin/images' },
                 { name: 'Escolas', icon: Settings, path: '/admin/schools' },
                 { name: 'Configurações', icon: Settings, path: '/admin/settings' },
+                { category: 'Formação' },
+                { name: 'Video-Aulas', icon: PlaySquare, path: '/admin/video-aulas' },
             ];
         } else if (user?.role === 'tutor') {
             return [
@@ -72,6 +75,8 @@ export default function AppLayout({ children }: LayoutProps) {
                 { name: 'Meus Alunos', icon: Users2, path: '/tutor/students' },
                 { name: 'Lançar Atividade', icon: BrainCircuit, path: '/tutor/activities' },
                 { name: 'Pareceres IA', icon: FileText, path: '/tutor/reports' },
+                { category: 'Formação' },
+                { name: 'Video-Aulas', icon: PlaySquare, path: '/tutor/video-aulas' },
             ];
         } else if (user?.role === 'school') {
             return [
@@ -85,6 +90,8 @@ export default function AppLayout({ children }: LayoutProps) {
                 { name: 'Atividades', icon: BrainCircuit, path: '/school/activities' },
                 { category: 'Acompanhamento' },
                 { name: 'Relatórios', icon: FileText, path: '/school/reports' },
+                { category: 'Formação' },
+                { name: 'Video-Aulas', icon: PlaySquare, path: '/school/video-aulas' },
             ];
         } else if (user?.role === 'parent') {
             return [
@@ -92,6 +99,8 @@ export default function AppLayout({ children }: LayoutProps) {
                 { category: 'Evolução' },
                 { name: 'Relatórios', icon: FileText, path: '/parent/reports' },
                 { name: 'Atividades Realizadas', icon: BrainCircuit, path: '/parent/activities' },
+                { category: 'Formação' },
+                { name: 'Video-Aulas', icon: PlaySquare, path: '/parent/video-aulas' },
             ];
         }
         return [];
