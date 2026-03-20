@@ -414,7 +414,6 @@ export default function SchoolStudents() {
                                 </div>
                                 </div>
                             </div>
-                        </div>
 
                         {/* Seção: Acesso ao Jogo / Painel */}
                         {!editingId && (
