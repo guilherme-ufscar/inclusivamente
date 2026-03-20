@@ -261,15 +261,6 @@ export default function Sondagem() {
                 <div className="bg-white rounded-2xl shadow-lg max-w-lg w-full p-8 text-center">
                     <div className="text-5xl mb-4">✅</div>
                     <h2 className="text-2xl font-bold text-gray-800 mb-2">Sondagem concluída!</h2>
-                    <p className="text-gray-500 mb-2">Pontuação total: <span className="font-bold text-gray-800">{resultado.score} / 400</span></p>
-                    {resultado.deficiencia_visual && (
-                        <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-1 inline-block mb-4">
-                            Deficiência Visual identificada — perfil determinado por diagnóstico
-                        </p>
-                    )}
-                    <div className={`inline-block px-4 py-2 rounded-full font-semibold text-sm mb-3 ${p.color}`}>
-                        {p.label}
-                    </div>
                     <p className="text-gray-600 text-sm mb-8">{p.desc}</p>
                     <button
                         onClick={() => navigate(backUrl)}

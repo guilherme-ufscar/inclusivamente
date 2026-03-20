@@ -461,32 +461,17 @@ export default function StudentsPage() {
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1">
-                                        <label className="text-sm font-medium text-slate-700">Diagnóstico / Espectro (Sondagem)</label>
-                                        <select
-                                            className="flex h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-                                            value={formData.persona}
-                                            onChange={e => setFormData({ ...formData, persona: Number(e.target.value) })}
-                                        >
-                                            <option value={0}>0 – Padrão (sem diagnóstico restrito)</option>
-                                            <option value={1}>1 – TEA Nível 2</option>
-                                            <option value={2}>2 – DI Leve + TEA</option>
-                                            <option value={3}>3 – DI Severa + Motora</option>
-                                            <option value={4}>4 – Deficiência Visual</option>
-                                        </select>
-                                    </div>
-                                    <div className="space-y-1 flex flex-col justify-end">
-                                        <label className="flex items-center gap-2 cursor-pointer p-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition h-11">
-                                            <input
-                                                type="checkbox"
-                                                className="w-4 h-4 text-brand-primary"
-                                                checked={formData.needs_tutor}
-                                                onChange={e => setFormData({ ...formData, needs_tutor: e.target.checked })}
-                                            />
-                                            <span className="text-sm font-medium text-slate-700">Necessita de Tutor Especializado</span>
-                                        </label>
-                                    </div>
+                                <div className="space-y-1">
+                                    <label className="flex items-center gap-2 cursor-pointer p-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition h-11">
+                                        <input
+                                            type="checkbox"
+                                            className="w-4 h-4 text-brand-primary"
+                                            checked={formData.needs_tutor}
+                                            onChange={e => setFormData({ ...formData, needs_tutor: e.target.checked })}
+                                        />
+                                        <span className="text-sm font-medium text-slate-700">Necessita de Tutor Especializado</span>
+                                    </label>
+                                </div>
                                 </div>
                             </div>
                         </div>

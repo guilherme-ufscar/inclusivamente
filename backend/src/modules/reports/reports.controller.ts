@@ -187,12 +187,23 @@ export const generateStudentReport = async (req: Request | any, res: Response) =
             });
         }
 
+        // ─── DADOS DO ALUNO (perfil, sondagem, cognitivo) ────────────────────
+        const studentData = await prisma.student.findUnique({
+            where: { id },
+            select: {
+                name: true, birth_date: true, grade_level: true, diagnosis: true,
+                needs_tutor: true, persona: true, sondagem_completed: true,
+                sondagem_score: true, sondagem_perfil: true,
+                cognitiveProfile: true,
+            }
+        });
+
         // ─── GERAÇÃO DO RELATÓRIO ─────────────────────────────────────────────
         const count = logs.length;
         let generatedSummary = '';
 
         if (count > 0) {
-            generatedSummary = buildHeuristicReport(autonomy_percentage, logs, bnccEnriched);
+            generatedSummary = buildHeuristicReport(autonomy_percentage, logs, bnccEnriched, studentData);
         } else {
             generatedSummary = 'Nenhuma atividade registrada no período selecionado.';
             tutorLevel = 'not_needed';
@@ -249,7 +260,7 @@ interface BnccEnriched {
     atividadesCount: number;
 }
 
-function buildHeuristicReport(autonomy_percentage: number, logs: any[], bnccEnriched: BnccEnriched[]): string {
+function buildHeuristicReport(autonomy_percentage: number, logs: any[], bnccEnriched: BnccEnriched[], studentData: any): string {
     const count = logs.length;
     const totalAcertos = logs.reduce((acc, l) => acc + (l.correct_count || 0), 0);
     const totalErros = logs.reduce((acc, l) => acc + (l.errors_count || 0), 0);
@@ -259,66 +270,330 @@ function buildHeuristicReport(autonomy_percentage: number, logs: any[], bnccEnri
     const tutorObsList = logs.filter(l => l.tutor_observations).map(l => l.tutor_observations);
     const interventions = logs.filter(l => l.tutor_intervention_needed === true || l.tutor_intervention_needed === 'true').length;
     const highDiff = logs.filter(l => l.difficulty_perceived === 'high').length;
+    const mediumDiff = logs.filter(l => l.difficulty_perceived === 'medium').length;
+    const easyDiff = logs.filter(l => l.difficulty_perceived === 'easy').length;
 
-    // ── Parágrafo 1: desempenho geral + cruzamento BNCC ──────────────────────
-    let p1 = `No período analisado, o aluno realizou ${count} atividade${count !== 1 ? 's' : ''}, totalizando ${totalAcertos} acerto${totalAcertos !== 1 ? 's' : ''} e ${totalErros} erro${totalErros !== 1 ? 's' : ''}`;
-    if (taxaAcerto !== null) {
-        p1 += ` (taxa de acerto de ${taxaAcerto}%)`;
+    // Tempo médio
+    const logsWithTime = logs.filter(l => l.time_spent && l.time_spent > 0);
+    const tempoMedio = logsWithTime.length > 0
+        ? Math.round(logsWithTime.reduce((acc, l) => acc + l.time_spent, 0) / logsWithTime.length)
+        : null;
+
+    const PERFIL_LABELS: Record<number, string> = {
+        1: 'TEA Nível 2 – Apoio substancial com adaptação curricular e mediação contínua',
+        2: 'DI Leve + TEA – Apoio pedagógico estruturado com currículo funcional e reforço emocional',
+        3: 'DI Severa + Motora – Apoio muito substancial 1:1 com foco em comunicação, conforto e inclusão afetiva',
+        4: 'Baixa Complexidade – Estratégias pedagógicas universais, sem necessidade de apoio especializado contínuo',
+        5: 'Deficiência Visual – Acessibilidade visual com recursos de ampliação, contraste e autonomia digital monitorada',
+    };
+
+    const COGNITIVE_LEVEL_LABELS: Record<string, string> = {
+        very_low: 'Muito Baixo – necessita de mediação constante e atividades altamente estruturadas',
+        low: 'Baixo – necessita de suporte frequente e adaptações significativas',
+        medium: 'Médio – responde bem a atividades estruturadas com suporte moderado',
+        high: 'Alto – demonstra boa capacidade de aprendizagem com suporte pontual',
+        very_high: 'Muito Alto – autonomia na aprendizagem com necessidade mínima de intervenção',
+    };
+
+    const LEARNING_STYLE_LABELS: Record<string, string> = {
+        visual: 'Visual – aprende melhor por meio de imagens, gráficos, esquemas e demonstrações visuais',
+        auditivo: 'Auditivo – aprende melhor por meio de instruções verbais, narrativas e estímulos sonoros',
+        cinestesico: 'Cinestésico – aprende melhor por meio de atividades práticas, manipulação e movimento corporal',
+    };
+
+    const sections: string[] = [];
+
+    // ═══ SEÇÃO 1: PERFIL DO ALUNO ════════════════════════════════════════
+    if (studentData) {
+        let perfil = '══ PERFIL DO ALUNO ══';
+        perfil += `\nAluno: ${studentData.name}`;
+        if (studentData.birth_date) {
+            const age = Math.floor((Date.now() - new Date(studentData.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+            perfil += ` | Idade: ${age} anos`;
+        }
+        if (studentData.grade_level) perfil += ` | Série: ${studentData.grade_level}`;
+        if (studentData.diagnosis) perfil += `\nDiagnóstico clínico: ${studentData.diagnosis}`;
+
+        if (studentData.sondagem_completed && studentData.sondagem_perfil) {
+            const perfilDesc = PERFIL_LABELS[studentData.sondagem_perfil] || `Perfil ${studentData.sondagem_perfil}`;
+            perfil += `\n\nResultado da Sondagem Educacional: Perfil ${studentData.sondagem_perfil} – ${perfilDesc}.`;
+            perfil += `\nA sondagem avalia 100 indicadores distribuídos em 5 domínios do desenvolvimento:`;
+            perfil += `\n  • Comunicação e Linguagem (20 indicadores): capacidade comunicativa, compreensão verbal, uso funcional da linguagem e participação comunicativa no contexto escolar.`;
+            perfil += `\n  • Cognição e Aprendizagem Funcional (20 indicadores): atenção, memória funcional, reconhecimento de símbolos, capacidade de aprendizagem por repetição e generalização.`;
+            perfil += `\n  • Funções Executivas (15 indicadores): iniciativa, atenção sustentada, planejamento, organização, controle de impulsos, tolerância à frustração e autorregulação.`;
+            perfil += `\n  • Comportamento, Interação Social e Emocional (20 indicadores): interesse social, interação com pares e adultos, regulação emocional, comportamentos disruptivos e vínculo afetivo.`;
+            perfil += `\n  • Motricidade e Autonomia Funcional (25 indicadores): controle postural, coordenação motora, autonomia em alimentação e higiene, consciência corporal e permanência segura no ambiente escolar.`;
+            perfil += `\nCada indicador é pontuado de 0 (não realiza / totalmente dependente) a 4 (realiza de forma independente e consistente). A classificação do perfil orienta o nível de apoio pedagógico necessário.`;
+        }
+
+        if (studentData.cognitiveProfile) {
+            const cp = studentData.cognitiveProfile;
+            perfil += `\n\nPerfil Cognitivo:`;
+            if (cp.cognitive_level) {
+                const cogDesc = COGNITIVE_LEVEL_LABELS[cp.cognitive_level] || cp.cognitive_level;
+                perfil += `\n  • Nível cognitivo: ${cogDesc}.`;
+            }
+            if (cp.learning_style) {
+                const lsDesc = LEARNING_STYLE_LABELS[cp.learning_style] || cp.learning_style;
+                perfil += `\n  • Estilo de aprendizagem: ${lsDesc}.`;
+            }
+            if (cp.special_needs) {
+                try {
+                    const needs = typeof cp.special_needs === 'string' ? JSON.parse(cp.special_needs) : cp.special_needs;
+                    if (Array.isArray(needs) && needs.length > 0) {
+                        perfil += `\n  • Necessidades especiais identificadas: ${needs.join('; ')}.`;
+                    }
+                } catch { /* ignore */ }
+            }
+            if (cp.summary) {
+                perfil += `\n  • Síntese do perfil cognitivo: ${cp.summary}`;
+            }
+        }
+
+        sections.push(perfil);
     }
-    p1 += '.';
 
-    if (highDiff > 0) {
-        p1 += ` Em ${highDiff} atividade${highDiff !== 1 ? 's' : ''} o nível de dificuldade percebida foi elevado, sinalizando conteúdos que requerem atenção pedagógica adicional.`;
+    // ═══ SEÇÃO 2: DESEMPENHO GERAL ═══════════════════════════════════════
+    let desempenho = '══ DESEMPENHO NO PERÍODO ══';
+    desempenho += `\nO aluno realizou ${count} atividade${count !== 1 ? 's' : ''} no período analisado, totalizando ${totalAcertos} acerto${totalAcertos !== 1 ? 's' : ''} e ${totalErros} erro${totalErros !== 1 ? 's' : ''}`;
+    if (taxaAcerto !== null) desempenho += ` (taxa de acerto geral: ${taxaAcerto}%)`;
+    desempenho += '.';
+
+    if (tempoMedio !== null) {
+        const minutos = Math.floor(tempoMedio / 60);
+        const segundos = tempoMedio % 60;
+        desempenho += ` O tempo médio por atividade foi de ${minutos > 0 ? `${minutos} minuto${minutos !== 1 ? 's' : ''}` : ''}${minutos > 0 && segundos > 0 ? ' e ' : ''}${segundos > 0 ? `${segundos} segundo${segundos !== 1 ? 's' : ''}` : ''}.`;
+        if (tempoMedio > 300) {
+            desempenho += ' O tempo elevado pode indicar dificuldade na compreensão dos enunciados ou necessidade de maior suporte durante as atividades.';
+        } else if (tempoMedio < 60) {
+            desempenho += ' O tempo reduzido pode indicar boa fluência na resolução ou, alternativamente, respostas por tentativa e erro — recomenda-se cruzar com a taxa de acerto.';
+        }
     }
 
+    if (highDiff > 0 || mediumDiff > 0 || easyDiff > 0) {
+        desempenho += `\n\nDistribuição de dificuldade percebida:`;
+        if (easyDiff > 0) desempenho += `\n  • Fácil: ${easyDiff} atividade${easyDiff !== 1 ? 's' : ''} (${Math.round(easyDiff / count * 100)}%)`;
+        if (mediumDiff > 0) desempenho += `\n  • Média: ${mediumDiff} atividade${mediumDiff !== 1 ? 's' : ''} (${Math.round(mediumDiff / count * 100)}%)`;
+        if (highDiff > 0) desempenho += `\n  • Elevada: ${highDiff} atividade${highDiff !== 1 ? 's' : ''} (${Math.round(highDiff / count * 100)}%)`;
+        if (highDiff > count * 0.4) {
+            desempenho += `\nAtenção: mais de 40% das atividades tiveram dificuldade percebida elevada, indicando que o conteúdo pode estar acima do nível atual do aluno ou que há necessidade de adaptações adicionais.`;
+        }
+    }
+
+    // Análise de padrão de erros
+    if (totalErros > 0) {
+        const logsWithErrors = logs.filter(l => (l.errors_count || 0) > 0);
+        const avgErrorsPerActivity = Math.round(totalErros / logsWithErrors.length * 10) / 10;
+        desempenho += `\n\nAnálise de erros: Dos ${count} exercícios, ${logsWithErrors.length} apresentaram erros (média de ${avgErrorsPerActivity} erro${avgErrorsPerActivity !== 1 ? 's' : ''} por atividade com erro).`;
+
+        // Erros em atividades com/sem tutor
+        const errosComTutor = logs.filter(l => l.has_tutor).reduce((acc, l) => acc + (l.errors_count || 0), 0);
+        const errosSemTutor = totalErros - errosComTutor;
+        const atividadesComTutor = logs.filter(l => l.has_tutor).length;
+        const atividadesSemTutor = count - atividadesComTutor;
+
+        if (atividadesComTutor > 0 && atividadesSemTutor > 0) {
+            const taxaErroComTutor = atividadesComTutor > 0 ? Math.round(errosComTutor / atividadesComTutor * 10) / 10 : 0;
+            const taxaErroSemTutor = atividadesSemTutor > 0 ? Math.round(errosSemTutor / atividadesSemTutor * 10) / 10 : 0;
+            desempenho += ` Taxa média de erros com tutor: ${taxaErroComTutor} por atividade; sem tutor: ${taxaErroSemTutor} por atividade.`;
+            if (taxaErroSemTutor > taxaErroComTutor * 1.5) {
+                desempenho += ' Observa-se aumento significativo de erros na ausência de tutor, sugerindo que a mediação externa é fator relevante para o desempenho.';
+            }
+        }
+    }
+
+    sections.push(desempenho);
+
+    // ═══ SEÇÃO 3: HABILIDADES BNCC DETALHADAS ════════════════════════════
     if (bnccEnriched.length > 0) {
-        p1 += ` As habilidades da Base Nacional Comum Curricular (BNCC) trabalhadas no período foram:`;
-        bnccEnriched.forEach(b => {
-            p1 += ` A competência ${b.code}`;
-            if (b.habilidade) p1 += ` — "${b.habilidade}"`;
-            if (b.disciplina || b.disciplinasRelacionadas.length > 0) {
-                const disc = b.disciplina || b.disciplinasRelacionadas.join(', ');
-                p1 += `, da disciplina de ${disc}`;
-            }
-            if (b.etapa) p1 += ` (${b.etapa})`;
-            if (b.descricao) p1 += `, que propõe ${b.descricao.charAt(0).toLowerCase() + b.descricao.slice(1)}`;
-            if (b.pilulas.length > 0) {
-                const pilulasStr = b.pilulas.slice(0, 2).join(' e ');
-                p1 += `, foi trabalhada por meio da${b.pilulas.length > 1 ? 's' : ''} pílula${b.pilulas.length > 1 ? 's' : ''} "${pilulasStr}"`;
-            }
-            const taxaB = (b.acertos + b.erros) > 0 ? Math.round((b.acertos / (b.acertos + b.erros)) * 100) : null;
-            p1 += `, com ${b.acertos} acerto${b.acertos !== 1 ? 's' : ''} e ${b.erros} erro${b.erros !== 1 ? 's' : ''} em ${b.atividadesCount} atividade${b.atividadesCount !== 1 ? 's' : ''}`;
-            if (taxaB !== null) p1 += ` (${taxaB}% de aproveitamento)`;
-            p1 += '.';
+        let bnccSection = '══ HABILIDADES DA BNCC TRABALHADAS ══';
+        bnccSection += `\nForam identificadas ${bnccEnriched.length} habilidade${bnccEnriched.length !== 1 ? 's' : ''} da Base Nacional Comum Curricular (BNCC) no período:\n`;
+
+        // Ordenar por taxa de acerto (fracas primeiro)
+        const bnccOrdenado = [...bnccEnriched].sort((a, b) => {
+            const taxaA = (a.acertos + a.erros) > 0 ? a.acertos / (a.acertos + a.erros) : 0;
+            const taxaB = (b.acertos + b.erros) > 0 ? b.acertos / (b.acertos + b.erros) : 0;
+            return taxaA - taxaB;
         });
+
+        bnccOrdenado.forEach((b, i) => {
+            const taxaB = (b.acertos + b.erros) > 0 ? Math.round((b.acertos / (b.acertos + b.erros)) * 100) : null;
+            let nivel = 'Em desenvolvimento';
+            if (taxaB !== null) {
+                if (taxaB >= 80) nivel = 'Consolidado';
+                else if (taxaB >= 60) nivel = 'Em progresso';
+                else if (taxaB >= 40) nivel = 'Em desenvolvimento';
+                else nivel = 'Necessita reforço';
+            }
+
+            bnccSection += `\n${i + 1}. ${b.code}`;
+            if (b.disciplina) bnccSection += ` | ${b.disciplina}`;
+            if (b.etapa) bnccSection += ` | ${b.etapa}`;
+            if (b.habilidade) bnccSection += `\n   Habilidade: ${b.habilidade}`;
+            if (b.descricao) bnccSection += `\n   Descrição BNCC: ${b.descricao}`;
+            if (b.pilulas.length > 0) bnccSection += `\n   Conteúdo trabalhado (pílulas): ${b.pilulas.join(', ')}`;
+            bnccSection += `\n   Desempenho: ${b.acertos} acerto${b.acertos !== 1 ? 's' : ''} e ${b.erros} erro${b.erros !== 1 ? 's' : ''} em ${b.atividadesCount} atividade${b.atividadesCount !== 1 ? 's' : ''}`;
+            if (taxaB !== null) bnccSection += ` (${taxaB}% de aproveitamento)`;
+            bnccSection += `\n   Nível de domínio: ${nivel}`;
+            bnccSection += '\n';
+        });
+
+        // Resumo cruzado
+        const fortes = bnccOrdenado.filter(b => {
+            const t = (b.acertos + b.erros) > 0 ? Math.round((b.acertos / (b.acertos + b.erros)) * 100) : 0;
+            return t >= 70;
+        });
+        const fracas = bnccOrdenado.filter(b => {
+            const t = (b.acertos + b.erros) > 0 ? Math.round((b.acertos / (b.acertos + b.erros)) * 100) : 0;
+            return t < 50;
+        });
+
+        if (fortes.length > 0) {
+            bnccSection += `\nHabilidades com bom domínio (≥70%): ${fortes.map(b => b.code).join(', ')}.`;
+        }
+        if (fracas.length > 0) {
+            bnccSection += `\nHabilidades que necessitam de reforço (<50%): ${fracas.map(b => b.code).join(', ')}. Recomenda-se retomar esses conteúdos com estratégias diferenciadas e maior mediação pedagógica.`;
+        }
+
+        sections.push(bnccSection);
     } else {
-        p1 += ' Não foram identificadas competências BNCC associadas às atividades do período.';
+        sections.push('══ HABILIDADES DA BNCC ══\nNão foram identificadas competências BNCC associadas às atividades do período. Recomenda-se verificar o mapeamento curricular das atividades utilizadas.');
     }
 
-    // ── Parágrafo 2: autonomia, intervenção e recomendação ───────────────────
-    let p2: string;
+    // ═══ SEÇÃO 4: AUTONOMIA E MEDIAÇÃO ═══════════════════════════════════
+    let autonomia = '══ AUTONOMIA E MEDIAÇÃO ══';
     if (autonomy_percentage > 70) {
-        p2 = `Quanto à autonomia, o aluno demonstrou desempenho independente ao longo do período (${autonomy_percentage.toFixed(0)}% de autonomia), executando as tarefas com assertividade e com mínima necessidade de mediação externa.`;
+        autonomia += `\nO aluno demonstrou desempenho independente ao longo do período (${autonomy_percentage.toFixed(0)}% de autonomia), executando as tarefas com assertividade e com mínima necessidade de mediação externa. Este nível de autonomia indica que o aluno está consolidando habilidades e pode ser gradualmente desafiado com conteúdos de maior complexidade.`;
     } else if (autonomy_percentage < 30) {
-        p2 = `Quanto à autonomia, o aluno apresentou forte dependência de mediação ao longo do período (${autonomy_percentage.toFixed(0)}% de autonomia), necessitando de suporte constante para a realização das atividades.`;
+        autonomia += `\nO aluno apresentou forte dependência de mediação ao longo do período (${autonomy_percentage.toFixed(0)}% de autonomia), necessitando de suporte constante para a realização das atividades. Isso sugere que o nível de complexidade das atividades pode estar acima da zona de desenvolvimento atual, ou que o aluno requer mais tempo para internalizar as estratégias de resolução.`;
     } else {
-        p2 = `Quanto à autonomia, o aluno apresentou nível intermediário de independência (${autonomy_percentage.toFixed(0)}% de autonomia), com variações conforme o tipo de atividade e a complexidade do conteúdo.`;
+        autonomia += `\nO aluno apresentou nível intermediário de independência (${autonomy_percentage.toFixed(0)}% de autonomia), com variações conforme o tipo de atividade e a complexidade do conteúdo. Encontra-se em zona de transição, onde a mediação ainda é necessária em momentos específicos.`;
     }
 
     if (interventions > 0) {
-        p2 += ` Foram registradas intervenções do tutor em ${interventions} atividade${interventions !== 1 ? 's' : ''}.`;
+        autonomia += `\nForam registradas intervenções do tutor em ${interventions} atividade${interventions !== 1 ? 's' : ''} (${Math.round(interventions / count * 100)}% das atividades).`;
     }
+
     if (tutorObsList.length > 0) {
-        p2 += ` Os tutores registraram as seguintes observações: ${tutorObsList.slice(0, 3).join('; ')}.`;
+        autonomia += `\n\nObservações registradas pelos tutores:`;
+        tutorObsList.slice(0, 5).forEach((obs, i) => {
+            autonomia += `\n  ${i + 1}. "${obs}"`;
+        });
+        if (tutorObsList.length > 5) {
+            autonomia += `\n  (e mais ${tutorObsList.length - 5} observação${tutorObsList.length - 5 !== 1 ? 'ões' : ''})`;
+        }
     }
 
+    sections.push(autonomia);
+
+    // ═══ SEÇÃO 5: FEEDBACK PEDAGÓGICO E RECOMENDAÇÕES ════════════════════
+    let feedback = '══ FEEDBACK PEDAGÓGICO E RECOMENDAÇÕES ══';
+
+    // Recomendação de tutor
     if (autonomy_percentage > 70) {
-        p2 += ' Recomenda-se suporte tutorial esporádico ou dispensável, incentivando a consolidação da independência do aluno.';
+        feedback += `\n\nRecomendação de tutoria: APOIO ESPORÁDICO OU DISPENSÁVEL. O aluno demonstra capacidade de realizar atividades com autonomia. Sugere-se manter acompanhamento leve para monitorar a evolução e oferecer desafios progressivos.`;
     } else if (autonomy_percentage < 30) {
-        p2 += ' Recomenda-se manutenção do suporte tutorial contínuo, com estratégias graduais de mediação para desenvolver progressivamente a autonomia.';
+        feedback += `\n\nRecomendação de tutoria: APOIO CONTÍNUO. O aluno necessita de mediação constante. Sugere-se manter tutor dedicado com estratégias graduais para desenvolver progressivamente a autonomia, utilizando modelagem, dicas visuais e reforço positivo.`;
     } else {
-        p2 += ' Recomenda-se suporte tutorial esporádico, com atenção especial às competências que apresentaram maior taxa de erros ou dificuldade percebida elevada.';
+        feedback += `\n\nRecomendação de tutoria: APOIO ESPORÁDICO. O aluno demonstra autonomia parcial. Sugere-se mediação direcionada nos momentos de maior dificuldade, com atenção especial às competências que apresentaram menor aproveitamento.`;
     }
 
-    return `${p1}\n\n${p2}`;
+    // Recomendações baseadas em desempenho
+    if (taxaAcerto !== null) {
+        if (taxaAcerto < 50) {
+            feedback += `\n\nDesempenho geral abaixo de 50% — recomenda-se: (a) revisar o nível de dificuldade das atividades propostas, considerando a zona de desenvolvimento proximal do aluno; (b) utilizar atividades de reforço com suporte visual e concreto; (c) aumentar a frequência de feedback imediato durante as atividades.`;
+        } else if (taxaAcerto >= 50 && taxaAcerto < 70) {
+            feedback += `\n\nDesempenho geral entre 50-70% — o aluno está em progressão. Recomenda-se: (a) manter o nível atual de atividades com variações para consolidação; (b) oferecer exercícios de fixação antes de avançar para novos conteúdos; (c) alternar entre atividades individuais e mediadas.`;
+        } else if (taxaAcerto >= 70 && taxaAcerto < 90) {
+            feedback += `\n\nDesempenho geral entre 70-90% — o aluno demonstra bom domínio dos conteúdos trabalhados. Recomenda-se: (a) introduzir gradualmente atividades de maior complexidade; (b) explorar conexões entre diferentes habilidades da BNCC; (c) reduzir progressivamente o suporte externo.`;
+        } else {
+            feedback += `\n\nDesempenho geral acima de 90% — excelente. Recomenda-se: (a) avançar para conteúdos do próximo nível; (b) propor atividades que exijam análise e síntese; (c) estimular a autonomia completa na resolução de problemas.`;
+        }
+    }
+
+    // Recomendações por perfil sondagem
+    if (studentData?.sondagem_perfil) {
+        const perfil = studentData.sondagem_perfil;
+        feedback += `\n\nOrientações específicas para o perfil do aluno (Perfil ${perfil}):`;
+        switch (perfil) {
+            case 1:
+                feedback += `\n  • Manter adaptação curricular com sequências previsíveis e rotinas visuais claras.`;
+                feedback += `\n  • Utilizar antecipação de mudanças para reduzir ansiedade e comportamentos reativos.`;
+                feedback += `\n  • Trabalhar habilidades sociais de forma estruturada, com mediação contínua.`;
+                feedback += `\n  • Garantir comunicação alternativa quando necessário e respeitar o tempo de processamento do aluno.`;
+                break;
+            case 2:
+                feedback += `\n  • Priorizar currículo funcional com atividades significativas e contextualizadas.`;
+                feedback += `\n  • Utilizar reforço emocional positivo como principal estratégia motivacional.`;
+                feedback += `\n  • Oferecer atividades com complexidade gradual e suporte visual constante.`;
+                feedback += `\n  • Trabalhar generalização de aprendizagens para diferentes contextos.`;
+                break;
+            case 3:
+                feedback += `\n  • Manter apoio 1:1 com foco em comunicação funcional e conforto.`;
+                feedback += `\n  • Priorizar inclusão afetiva e participação significativa nas atividades em grupo.`;
+                feedback += `\n  • Utilizar recursos multissensoriais adaptados às capacidades motoras do aluno.`;
+                feedback += `\n  • Monitorar sinais de desconforto e fadiga, ajustando o tempo e ritmo das atividades.`;
+                break;
+            case 4:
+                feedback += `\n  • Aplicar estratégias pedagógicas universais com foco em engajamento e motivação.`;
+                feedback += `\n  • Estimular a participação ativa e a autonomia progressiva.`;
+                feedback += `\n  • Monitorar a evolução e estar atento a possíveis necessidades emergentes.`;
+                break;
+            case 5:
+                feedback += `\n  • Garantir acessibilidade visual em todos os materiais (ampliação, contraste, fontes adequadas).`;
+                feedback += `\n  • Utilizar recursos de tecnologia assistiva para autonomia digital.`;
+                feedback += `\n  • Oferecer descrição verbal de conteúdos visuais (audiodescrição).`;
+                feedback += `\n  • Garantir iluminação adequada e posicionamento ergonômico durante as atividades.`;
+                break;
+        }
+    }
+
+    // Perfil cognitivo e recomendações
+    if (studentData?.cognitiveProfile?.learning_style) {
+        const ls = studentData.cognitiveProfile.learning_style;
+        feedback += `\n\nOrientações baseadas no estilo de aprendizagem (${ls}):`;
+        switch (ls) {
+            case 'visual':
+                feedback += `\n  • Priorizar atividades com apoio de imagens, diagramas, mapas conceituais e vídeos.`;
+                feedback += `\n  • Utilizar códigos de cores para organizar informações e categorias.`;
+                feedback += `\n  • Apresentar instruções de forma visual, não apenas verbal.`;
+                break;
+            case 'auditivo':
+                feedback += `\n  • Priorizar instruções verbais claras e narrativas.`;
+                feedback += `\n  • Utilizar recursos sonoros, músicas e histórias como veículo de aprendizagem.`;
+                feedback += `\n  • Permitir que o aluno verbalize o raciocínio como estratégia de consolidação.`;
+                break;
+            case 'cinestesico':
+                feedback += `\n  • Priorizar atividades práticas, manipulativas e com movimento corporal.`;
+                feedback += `\n  • Oferecer materiais concretos para apoiar conceitos abstratos.`;
+                feedback += `\n  • Permitir pausas ativas e alternar entre atividades que exigem concentração e movimento.`;
+                break;
+        }
+    }
+
+    // Próximos passos
+    feedback += `\n\nPróximos passos sugeridos:`;
+    if (bnccEnriched.length > 0) {
+        const fracas = bnccEnriched.filter(b => {
+            const t = (b.acertos + b.erros) > 0 ? Math.round((b.acertos / (b.acertos + b.erros)) * 100) : 0;
+            return t < 50;
+        });
+        if (fracas.length > 0) {
+            feedback += `\n  1. Retomar as habilidades com menor aproveitamento: ${fracas.map(b => `${b.code}${b.habilidade ? ` (${b.habilidade})` : ''}`).join('; ')}.`;
+            feedback += `\n  2. Propor atividades de reforço específicas para essas habilidades com nível de dificuldade reduzido.`;
+            feedback += `\n  3. Reavaliar após o ciclo de reforço para verificar progressão.`;
+        } else {
+            feedback += `\n  1. Avançar para novas habilidades da BNCC mantendo revisão periódica das já trabalhadas.`;
+            feedback += `\n  2. Introduzir atividades com nível de complexidade progressivamente maior.`;
+        }
+    } else {
+        feedback += `\n  1. Mapear as atividades da plataforma com as habilidades da BNCC para enriquecer os próximos relatórios.`;
+        feedback += `\n  2. Acompanhar a evolução do aluno com relatórios periódicos.`;
+    }
+    feedback += `\n  • Manter comunicação contínua entre equipe pedagógica, tutor e família.`;
+    feedback += `\n  • Agendar nova avaliação de sondagem caso haja mudança significativa no comportamento ou desempenho do aluno.`;
+
+    sections.push(feedback);
+
+    return sections.join('\n\n');
 }

@@ -74,9 +74,8 @@ export default function ReportsPage() {
             });
             setIsModalOpen(false);
             fetchReports();
-        } catch (err: any) {
-            const msg = err?.response?.data?.message || 'Erro ao gerar relatório (ou não há histórico de atividades suficiente).';
-            alert(msg);
+        } catch (err) {
+            alert('Erro ao gerar relatório (ou não há histórico de atividades suficiente).');
         } finally {
             setIsGenerating(false);
         }
@@ -121,141 +120,44 @@ export default function ReportsPage() {
         }
     };
 
+    const formatReportHTML = (text: string) => {
+        return text
+            .replace(/══ (.+?) ══/g, '<div class="section-title">$1</div>')
+            .replace(/\n/g, '<br/>');
+    };
+
     const handleDownloadPDF = (report: Report) => {
         const printWindow = window.open('', '', 'width=900,height=800');
         if (!printWindow) return;
+        const studentName = report.student?.name || report.Student?.name || 'Aluno';
 
         printWindow.document.write(`
           <html>
             <head>
-              <title>Parecer Analítico - ${report.student?.name || report.Student?.name || 'Aluno'}</title>
+              <title>Parecer Analítico - ${studentName}</title>
               <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
               <style>
                 * { box-sizing: border-box; }
-                body { 
-                    font-family: 'Inter', Tahoma, Geneva, Verdana, sans-serif; 
-                    padding: 40px; 
-                    color: #334155; 
-                    line-height: 1.6; 
-                    background-color: #f8fafc;
-                    margin: 0;
-                    -webkit-print-color-adjust: exact !important;
-                    print-color-adjust: exact !important;
-                }
-                .page {
-                    background: white;
-                    border-radius: 16px;
-                    padding: 40px;
-                    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-                    max-width: 900px;
-                    margin: 0 auto;
-                }
-                .header { 
-                    border-bottom: 2px solid #e2e8f0; 
-                    padding-bottom: 24px; 
-                    margin-bottom: 30px; 
-                    display: flex; 
-                    justify-content: space-between; 
-                    align-items: flex-start; 
-                }
-                .header-info {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 8px;
-                }
-                .logo {
-                    height: 52px;
-                    object-fit: contain;
-                }
+                body { font-family: 'Inter', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #334155; line-height: 1.6; background-color: #f8fafc; margin: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                .page { background: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); max-width: 900px; margin: 0 auto; }
+                .header { border-bottom: 2px solid #e2e8f0; padding-bottom: 24px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-start; }
+                .header-info { display: flex; flex-direction: column; gap: 8px; }
+                .logo { height: 52px; object-fit: contain; }
                 h1 { color: #0f172a; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
                 .subtitle { color: #64748b; font-size: 15px; font-weight: 500; }
-                
-                .dashboard-grid {
-                    display: grid;
-                    grid-template-columns: repeat(3, 1fr);
-                    gap: 16px;
-                    margin-bottom: 32px;
-                }
-                .stat-card {
-                    background: #f1f5f9;
-                    padding: 16px 20px;
-                    border-radius: 12px;
-                    border: 1px solid #e2e8f0;
-                }
+                .dashboard-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
+                .stat-card { background: #f1f5f9; padding: 16px 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
                 .stat-label { font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 6px; letter-spacing: 0.05em; }
                 .stat-value { font-size: 20px; color: #0f172a; font-weight: 800; }
-
-                .content-section {
-                    margin-bottom: 32px;
-                    background: white;
-                }
-                h3 { 
-                    margin: 0 0 16px 0; 
-                    color: #0f172a; 
-                    font-size: 16px; 
-                    font-weight: 700;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                }
-                
-                .ai-summary {
-                    background: #f8fafc;
-                    border-left: 4px solid #10b981;
-                    padding: 24px;
-                    border-radius: 0 12px 12px 0;
-                    color: #334155;
-                    font-size: 15px;
-                    line-height: 1.7;
-                }
-
-                .tutor-section { 
-                    background: #fffbeb; 
-                    border: 1px solid #fde68a; 
-                    padding: 24px; 
-                    border-radius: 12px; 
-                }
-                .tutor-section h3 {
-                    color: #b45309;
-                }
-
-                .recommendation { 
-                    margin-top: 20px; 
-                    padding: 32px; 
-                    background: #eff6ff; 
-                    border-radius: 16px;
-                    border: 1px solid #bfdbfe;
-                    text-align: center;
-                }
-                .recommendation .label {
-                    font-size: 13px;
-                    color: #3b82f6;
-                    text-transform: uppercase;
-                    font-weight: 700;
-                    letter-spacing: 0.05em;
-                    margin-bottom: 8px;
-                }
-                .recommendation .value {
-                    font-size: 28px;
-                    color: #1d4ed8;
-                    font-weight: 800;
-                }
-                
-                .footer {
-                    margin-top: 40px;
-                    padding-top: 24px;
-                    border-top: 1px solid #e2e8f0;
-                    text-align: center;
-                    color: #94a3b8;
-                    font-size: 13px;
-                    font-weight: 500;
-                }
-
-                @media print {
-                    body { background-color: white; padding: 0; }
-                    .page { box-shadow: none; padding: 0; border-radius: 0; max-width: 100%; }
-                    .stat-card { border-color: #cbd5e1; }
-                }
+                .section-title { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin: 28px 0 16px 0; }
+                .report-body { font-size: 14px; line-height: 1.8; color: #334155; }
+                .tutor-section { background: #fffbeb; border: 1px solid #fde68a; padding: 24px; border-radius: 12px; margin-top: 28px; }
+                .tutor-section-title { color: #b45309; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+                .recommendation { margin-top: 28px; padding: 32px; background: #eff6ff; border-radius: 16px; border: 1px solid #bfdbfe; text-align: center; }
+                .recommendation .label { font-size: 13px; color: #3b82f6; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 8px; }
+                .recommendation .value { font-size: 28px; color: #1d4ed8; font-weight: 800; }
+                .footer { margin-top: 40px; padding-top: 24px; border-top: 1px solid #e2e8f0; text-align: center; color: #94a3b8; font-size: 13px; font-weight: 500; }
+                @media print { body { background-color: white; padding: 0; } .page { box-shadow: none; padding: 0; border-radius: 0; max-width: 100%; } .section-title { break-after: avoid; } }
               </style>
             </head>
             <body>
@@ -263,23 +165,23 @@ export default function ReportsPage() {
                   <div class="header">
                       <div class="header-info">
                           <h1>Parecer de Desenvolvimento</h1>
-                          <div class="subtitle">Documento Analítico Oficial</div>
+                          <div class="subtitle">Relat&oacute;rio Pedag&oacute;gico Completo</div>
                       </div>
                       <div style="text-align: right;">
-                          <img src="${window.location.origin}/logo.svg" onerror="this.src='https://via.placeholder.com/150x50?text=Inclusiva+Mente'" class="logo" alt="Logo da Plataforma" />
-                          <div style="color: #94a3b8; font-size: 12px; margin-top: 8px; font-weight: 500;">Emissão: ${new Date().toLocaleDateString('pt-BR')}</div>
+                          <img src="${window.location.origin}/logo.svg" onerror="this.style.display='none'" class="logo" alt="Logo" />
+                          <div style="color: #94a3b8; font-size: 12px; margin-top: 8px; font-weight: 500;">Emiss&atilde;o: ${new Date().toLocaleDateString('pt-BR')}</div>
                       </div>
                   </div>
-                  
+
                   <div class="dashboard-grid">
                       <div class="stat-card">
                           <div class="stat-label">Aluno Avaliado</div>
-                          <div class="stat-value" style="color: #3b82f6;">${report.student?.name || report.Student?.name || 'Não Informado'}</div>
+                          <div class="stat-value" style="color: #3b82f6;">${studentName}</div>
                       </div>
                       <div class="stat-card">
-                          <div class="stat-label">Período de Análise</div>
+                          <div class="stat-label">Per&iacute;odo de An&aacute;lise</div>
                           <div class="stat-value" style="font-size: 16px; line-height: 1.4;">
-                              ${new Date(report.period_start).toLocaleDateString('pt-BR')} <span style="color:#94a3b8;font-weight:500">até</span><br/>${new Date(report.period_end).toLocaleDateString('pt-BR')}
+                              ${new Date(report.period_start).toLocaleDateString('pt-BR')} <span style="color:#94a3b8;font-weight:500">at&eacute;</span><br/>${new Date(report.period_end).toLocaleDateString('pt-BR')}
                           </div>
                       </div>
                       <div class="stat-card">
@@ -287,40 +189,32 @@ export default function ReportsPage() {
                           <div class="stat-value">${(report.activities_without_tutor_count || 0) + (report.activities_with_tutor_count || 0)}</div>
                       </div>
                   </div>
-                  
-                  <div class="content-section">
-                      <h3><span style="display:inline-block;width:10px;height:10px;background:#10b981;border-radius:50%;"></span> Síntese Qualitativa Inteligente</h3>
-                      <div class="ai-summary">
-                          ${report.summary_text.replace(/\n/g, '<br/>')}
-                      </div>
+
+                  <div class="report-body">
+                      ${formatReportHTML(report.summary_text)}
                   </div>
 
                   ${report.tutor_observations ? `
-                  <div class="content-section">
-                      <div class="tutor-section">
-                          <h3><span style="display:inline-block;width:10px;height:10px;background:#f59e0b;border-radius:50%;"></span> Parecer Técnico do Especialista</h3>
-                          <div style="color: #451a03; font-size: 15px; line-height: 1.7;">
-                              ${report.tutor_observations.replace(/\n/g, '<br/>')}
-                          </div>
+                  <div class="tutor-section">
+                      <div class="tutor-section-title">Parecer T&eacute;cnico do Especialista</div>
+                      <div style="color: #451a03; font-size: 14px; line-height: 1.7;">
+                          ${report.tutor_observations.replace(/\n/g, '<br/>')}
                       </div>
                   </div>
                   ` : ''}
 
                   <div class="recommendation">
-                      <div class="label">Parecer do Motor Pedagógico</div>
+                      <div class="label">Parecer do Motor Pedag&oacute;gico</div>
                       <div class="value">${translateRecommendation(report.tutor_recommendation).toUpperCase()}</div>
                   </div>
-                  
+
                   <div class="footer">
                       Documento gerado pelo Ecossistema Inclusiva Mente &copy; ${new Date().getFullYear()}<br/>
-                      <span style="color: #cbd5e1; font-size: 11px; margin-top: 4px; display: block;">Uso restrito e confidencial. Informações protegidas por Lei.</span>
+                      <span style="color: #cbd5e1; font-size: 11px; margin-top: 4px; display: block;">Uso restrito e confidencial. Informa&ccedil;&otilde;es protegidas por Lei.</span>
                   </div>
               </div>
               <script>
-                  setTimeout(() => {
-                      window.print();
-                      window.close();
-                  }, 800);
+                  setTimeout(() => { window.print(); window.close(); }, 800);
               </script>
             </body>
           </html>
@@ -373,8 +267,8 @@ export default function ReportsPage() {
                                                 Resumo da IA
                                             </h4>
                                             <div
-                                                className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-sm text-slate-700 leading-relaxed max-h-64 overflow-y-auto custom-scrollbar"
-                                                dangerouslySetInnerHTML={{ __html: report.summary_text.replace(/\n/g, '<br />') }}
+                                                className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-sm text-slate-700 leading-relaxed max-h-96 overflow-y-auto custom-scrollbar"
+                                                dangerouslySetInnerHTML={{ __html: report.summary_text.replace(/══ (.+?) ══/g, '<div style="background:linear-gradient(135deg,#1e293b,#334155);color:white;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin:16px 0 8px 0">$1</div>').replace(/\n/g, '<br />') }}
                                             />
                                         </div>
 
