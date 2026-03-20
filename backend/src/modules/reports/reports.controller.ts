@@ -194,7 +194,7 @@ export const generateStudentReport = async (req: Request | any, res: Response) =
                 name: true, birth_date: true, grade_level: true, diagnosis: true,
                 needs_tutor: true, persona: true, sondagem_completed: true,
                 sondagem_score: true, sondagem_perfil: true,
-                cognitiveProfile: true,
+                CognitiveProfiles: true,
             }
         });
 
@@ -326,8 +326,8 @@ function buildHeuristicReport(autonomy_percentage: number, logs: any[], bnccEnri
             perfil += `\nCada indicador é pontuado de 0 (não realiza / totalmente dependente) a 4 (realiza de forma independente e consistente). A classificação do perfil orienta o nível de apoio pedagógico necessário.`;
         }
 
-        if (studentData.cognitiveProfile) {
-            const cp = studentData.cognitiveProfile;
+        if (studentData.CognitiveProfiles && studentData.CognitiveProfiles.length > 0) {
+            const cp = studentData.CognitiveProfiles[0];
             perfil += `\n\nPerfil Cognitivo:`;
             if (cp.cognitive_level) {
                 const cogDesc = COGNITIVE_LEVEL_LABELS[cp.cognitive_level] || cp.cognitive_level;
@@ -549,8 +549,9 @@ function buildHeuristicReport(autonomy_percentage: number, logs: any[], bnccEnri
     }
 
     // Perfil cognitivo e recomendações
-    if (studentData?.cognitiveProfile?.learning_style) {
-        const ls = studentData.cognitiveProfile.learning_style;
+    const cpFirst = studentData?.CognitiveProfiles?.[0];
+    if (cpFirst?.learning_style) {
+        const ls = cpFirst.learning_style;
         feedback += `\n\nOrientações baseadas no estilo de aprendizagem (${ls}):`;
         switch (ls) {
             case 'visual':
