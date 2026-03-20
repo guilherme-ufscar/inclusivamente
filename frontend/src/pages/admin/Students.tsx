@@ -474,7 +474,6 @@ export default function StudentsPage() {
                                 </div>
                                 </div>
                             </div>
-                        </div>
 
                         {/* Seção: Dados da Conta (Login do Jogo) */}
                         {!editingId && (
