@@ -15,8 +15,8 @@ interface Report {
     tutor_recommendation: string;
     summary_text: string;
     tutor_observations?: string;
-    Student?: { name: string };
-    student?: { name: string };
+    Student?: { name: string; needs_tutor?: boolean };
+    student?: { name: string; needs_tutor?: boolean };
 }
 
 interface Student {
@@ -35,12 +35,9 @@ export default function ReportsPage() {
     const [tutorObservation, setTutorObservation] = useState('');
     const [filterType, setFilterType] = useState('period');
     const [activityCount, setActivityCount] = useState(5);
-    const [startDate, setStartDate] = useState(() => {
-        const d = new Date();
-        d.setMonth(d.getMonth() - 1);
-        return d.toISOString().split('T')[0];
-    });
-    const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
+    const [periodDays, setPeriodDays] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -130,6 +127,7 @@ export default function ReportsPage() {
         const printWindow = window.open('', '', 'width=900,height=800');
         if (!printWindow) return;
         const studentName = report.student?.name || report.Student?.name || 'Aluno';
+        const needsTutor = report.student?.needs_tutor || report.Student?.needs_tutor;
 
         printWindow.document.write(`
           <html>
@@ -145,7 +143,7 @@ export default function ReportsPage() {
                 .logo { height: 52px; object-fit: contain; }
                 h1 { color: #0f172a; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
                 .subtitle { color: #64748b; font-size: 15px; font-weight: 500; }
-                .dashboard-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
+                .dashboard-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
                 .stat-card { background: #f1f5f9; padding: 16px 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
                 .stat-label { font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 6px; letter-spacing: 0.05em; }
                 .stat-value { font-size: 20px; color: #0f172a; font-weight: 800; }
@@ -187,6 +185,10 @@ export default function ReportsPage() {
                       <div class="stat-card">
                           <div class="stat-label">Atividades Computadas</div>
                           <div class="stat-value">${(report.activities_without_tutor_count || 0) + (report.activities_with_tutor_count || 0)}</div>
+                      </div>
+                      <div class="stat-card" style="background:${needsTutor ? '#fffbeb' : '#f0fdf4'};border-color:${needsTutor ? '#fde68a' : '#bbf7d0'}">
+                          <div class="stat-label" style="color:${needsTutor ? '#92400e' : '#166534'}">Necessidade de Tutor</div>
+                          <div class="stat-value" style="font-size:14px;color:${needsTutor ? '#b45309' : '#15803d'};line-height:1.4;">${needsTutor ? '⚠ Necessita Tutor Especializado' : '✓ Não Necessita Tutor'}</div>
                       </div>
                   </div>
 
@@ -292,11 +294,16 @@ export default function ReportsPage() {
                                         </div>
                                     </div>
                                     <div className="space-y-4">
-                                        <div className="p-4 bg-brand-primary/5 rounded-xl border border-brand-primary/10">
+                                        <div className="p-4 bg-brand-primary/5 rounded-xl border border-brand-primary/10 space-y-2">
                                             <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">Métricas</p>
                                             <p className="text-sm text-slate-800">
                                                 <strong>Atividades c/ Tutor:</strong> {report.activities_with_tutor_count}
                                             </p>
+                                            <div className={`mt-2 px-3 py-2 rounded-lg text-xs font-semibold border ${(report.student?.needs_tutor || report.Student?.needs_tutor) ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'}`}>
+                                                {(report.student?.needs_tutor || report.Student?.needs_tutor)
+                                                    ? '⚠ Necessita Tutor Especializado'
+                                                    : '✓ Não Necessita Tutor Especializado'}
+                                            </div>
                                         </div>
                                         <Button
                                             variant="outline"
@@ -343,39 +350,40 @@ export default function ReportsPage() {
                     </div>
 
                     {filterType === 'period' ? (
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1">
-                                <label className="text-sm font-medium text-slate-700">Data Inicial</label>
-                                <input
-                                    type="date"
-                                    required
-                                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary outline-none"
-                                    value={startDate}
-                                    onChange={(e) => setStartDate(e.target.value)}
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-medium text-slate-700">Data Final</label>
-                                <input
-                                    type="date"
-                                    required
-                                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary outline-none"
-                                    value={endDate}
-                                    onChange={(e) => setEndDate(e.target.value)}
-                                />
-                            </div>
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-slate-700">Período de análise</label>
+                            <select
+                                required
+                                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                                value={periodDays}
+                                onChange={(e) => {
+                                    const days = Number(e.target.value);
+                                    setPeriodDays(e.target.value);
+                                    const end = new Date();
+                                    const start = new Date();
+                                    start.setDate(start.getDate() - days);
+                                    setStartDate(start.toISOString().split('T')[0]);
+                                    setEndDate(end.toISOString().split('T')[0]);
+                                }}
+                            >
+                                <option value="" disabled>Selecione o período</option>
+                                <option value="7">Última semana (7 dias)</option>
+                                <option value="30">Último mês (30 dias)</option>
+                                <option value="60">Últimos 60 dias</option>
+                            </select>
                         </div>
                     ) : (
                         <div className="space-y-1">
                             <label className="text-sm font-medium text-slate-700">Quantidade de Atividades Recentes</label>
                             <input
                                 type="number"
-                                min={1}
+                                min={5}
                                 required
                                 className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary outline-none"
                                 value={activityCount}
-                                onChange={(e) => setActivityCount(Number(e.target.value))}
+                                onChange={(e) => setActivityCount(Math.max(5, Number(e.target.value)))}
                             />
+                            <p className="text-xs text-slate-400">Mínimo de 5 atividades.</p>
                         </div>
                     )}
 

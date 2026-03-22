@@ -12,7 +12,7 @@ export const getReports = async (req: Request, res: Response) => {
         const reports = await prisma.report.findMany({
             where: filter,
             orderBy: { generated_at: 'desc' },
-            include: { student: { select: { name: true } } }
+            include: { student: { select: { name: true, needs_tutor: true } } }
         });
 
         return res.status(200).json({ success: true, data: reports });
@@ -27,7 +27,7 @@ export const getReportById = async (req: Request, res: Response) => {
         const { id } = req.params as any;
         const report = await prisma.report.findUnique({
             where: { id },
-            include: { student: { select: { name: true } } }
+            include: { student: { select: { name: true, needs_tutor: true } } }
         });
 
         if (!report) return res.status(404).json({ success: false, message: 'Report not found' });
@@ -407,38 +407,110 @@ function buildHeuristicReport(autonomy_percentage: number, logs: any[], bnccEnri
     // ═══ SEÇÃO 3: HABILIDADES BNCC DETALHADAS ════════════════════════════
     if (bnccEnriched.length > 0) {
         let bnccSection = '══ HABILIDADES DA BNCC TRABALHADAS ══';
-        bnccSection += `\nForam identificadas ${bnccEnriched.length} habilidade${bnccEnriched.length !== 1 ? 's' : ''} da Base Nacional Comum Curricular (BNCC) no período:\n`;
+        bnccSection += `\nA Base Nacional Comum Curricular (BNCC) é o documento normativo que define o conjunto de aprendizagens essenciais que todos os estudantes brasileiros têm direito de desenvolver ao longo da Educação Básica. Cada código BNCC identifica uma habilidade específica que o aluno deve desenvolver em determinada etapa e componente curricular.`;
+        bnccSection += `\n\nForam identificadas ${bnccEnriched.length} habilidade${bnccEnriched.length !== 1 ? 's' : ''} da BNCC trabalhadas no período analisado:\n`;
 
-        // Ordenar por taxa de acerto (fracas primeiro)
+        // Ordenar por taxa de acerto (fracas primeiro para dar destaque)
         const bnccOrdenado = [...bnccEnriched].sort((a, b) => {
             const taxaA = (a.acertos + a.erros) > 0 ? a.acertos / (a.acertos + a.erros) : 0;
             const taxaB = (b.acertos + b.erros) > 0 ? b.acertos / (b.acertos + b.erros) : 0;
             return taxaA - taxaB;
         });
 
+        // Função para decodificar o código BNCC e explicar sua estrutura
+        const decodificarCodigo = (code: string): string => {
+            if (!code || code.length < 4) return '';
+            const etapaMap: Record<string, string> = {
+                'EI': 'Educação Infantil',
+                'EF': 'Ensino Fundamental',
+                'EM': 'Ensino Médio',
+            };
+            const etapaSigla = code.substring(0, 2).toUpperCase();
+            const etapaDesc = etapaMap[etapaSigla] || etapaSigla;
+
+            // Para EF: EF01MA01 → EF = Ensino Fundamental, 01 = 1º ano, MA = Matemática, 01 = habilidade 01
+            if (etapaSigla === 'EF' && code.length >= 8) {
+                const ano = code.substring(2, 4);
+                const componente = code.substring(4, 6).toUpperCase();
+                const num = code.substring(6);
+                const componenteMap: Record<string, string> = {
+                    'LP': 'Língua Portuguesa', 'MA': 'Matemática', 'CI': 'Ciências',
+                    'HI': 'História', 'GE': 'Geografia', 'AR': 'Arte',
+                    'EF': 'Educação Física', 'ER': 'Ensino Religioso',
+                    'LI': 'Língua Inglesa', 'LE': 'Língua Estrangeira',
+                    'CN': 'Ciências da Natureza', 'CH': 'Ciências Humanas',
+                };
+                const componenteDesc = componenteMap[componente] || componente;
+                const anoDesc = ano === '01' ? '1º ano' : ano === '02' ? '2º ano' : ano === '03' ? '3º ano'
+                    : ano === '04' ? '4º ano' : ano === '05' ? '5º ano' : ano === '06' ? '6º ano'
+                    : ano === '07' ? '7º ano' : ano === '08' ? '8º ano' : ano === '09' ? '9º ano'
+                    : `${parseInt(ano, 10)}º ano`;
+                return `Este código pertence ao ${etapaDesc}, componente curricular de ${componenteDesc}, previsto para o ${anoDesc}, sendo a habilidade de número ${parseInt(num, 10)} desse conjunto.`;
+            }
+            return `Código pertencente à etapa de ${etapaDesc}.`;
+        };
+
         bnccOrdenado.forEach((b, i) => {
-            const taxaB = (b.acertos + b.erros) > 0 ? Math.round((b.acertos / (b.acertos + b.erros)) * 100) : null;
+            const taxa = (b.acertos + b.erros) > 0 ? Math.round((b.acertos / (b.acertos + b.erros)) * 100) : null;
             let nivel = 'Em desenvolvimento';
-            if (taxaB !== null) {
-                if (taxaB >= 80) nivel = 'Consolidado';
-                else if (taxaB >= 60) nivel = 'Em progresso';
-                else if (taxaB >= 40) nivel = 'Em desenvolvimento';
-                else nivel = 'Necessita reforço';
+            let nivelExplicacao = 'O aluno ainda está construindo essa habilidade e necessita de suporte pedagógico para avançar.';
+            if (taxa !== null) {
+                if (taxa >= 80) {
+                    nivel = 'Consolidado';
+                    nivelExplicacao = 'O aluno demonstra domínio consistente desta habilidade, realizando as atividades com segurança e aproveitamento elevado.';
+                } else if (taxa >= 60) {
+                    nivel = 'Em progresso';
+                    nivelExplicacao = 'O aluno apresenta bom avanço nesta habilidade, com aproveitamento satisfatório, mas ainda há espaço para consolidação.';
+                } else if (taxa >= 40) {
+                    nivel = 'Em desenvolvimento';
+                    nivelExplicacao = 'O aluno está em processo de construção desta habilidade. Recomenda-se manter exposição ao conteúdo com mediação estruturada.';
+                } else {
+                    nivel = 'Necessita reforço';
+                    nivelExplicacao = 'O aluno apresenta dificuldade significativa nesta habilidade. É fundamental retomar o conteúdo com estratégias diferenciadas, maior mediação e atividades adaptadas ao seu nível atual.';
+                }
             }
 
-            bnccSection += `\n${i + 1}. ${b.code}`;
-            if (b.disciplina) bnccSection += ` | ${b.disciplina}`;
-            if (b.etapa) bnccSection += ` | ${b.etapa}`;
-            if (b.habilidade) bnccSection += `\n   Habilidade: ${b.habilidade}`;
-            if (b.descricao) bnccSection += `\n   Descrição BNCC: ${b.descricao}`;
-            if (b.pilulas.length > 0) bnccSection += `\n   Conteúdo trabalhado (pílulas): ${b.pilulas.join(', ')}`;
-            bnccSection += `\n   Desempenho: ${b.acertos} acerto${b.acertos !== 1 ? 's' : ''} e ${b.erros} erro${b.erros !== 1 ? 's' : ''} em ${b.atividadesCount} atividade${b.atividadesCount !== 1 ? 's' : ''}`;
-            if (taxaB !== null) bnccSection += ` (${taxaB}% de aproveitamento)`;
-            bnccSection += `\n   Nível de domínio: ${nivel}`;
+            const decodificacao = decodificarCodigo(b.code);
+
+            bnccSection += `\n─────────────────────────────────────────`;
+            bnccSection += `\n${i + 1}. Código BNCC: ${b.code}`;
+            if (b.disciplina) bnccSection += ` | Componente: ${b.disciplina}`;
+            if (b.etapa) bnccSection += ` | Etapa: ${b.etapa}`;
+
+            if (decodificacao) {
+                bnccSection += `\n   O que este código significa: ${decodificacao}`;
+            }
+
+            if (b.habilidade) {
+                bnccSection += `\n\n   Título da Habilidade: ${b.habilidade}`;
+            }
+
+            if (b.descricao) {
+                bnccSection += `\n\n   O que a BNCC propõe para esta habilidade:`;
+                bnccSection += `\n   "${b.descricao}"`;
+                bnccSection += `\n   Em outras palavras, espera-se que o estudante seja capaz de ${b.descricao.charAt(0).toLowerCase()}${b.descricao.slice(1).replace(/\.$/, '')} no contexto das atividades pedagógicas realizadas.`;
+            }
+
+            if (b.disciplinasRelacionadas.length > 0) {
+                bnccSection += `\n\n   Componentes curriculares relacionados: ${b.disciplinasRelacionadas.join(', ')}.`;
+            }
+
+            if (b.pilulas.length > 0) {
+                bnccSection += `\n\n   Conteúdos trabalhados pelo aluno nesta habilidade:`;
+                b.pilulas.forEach(p => { bnccSection += `\n     • ${p}`; });
+            }
+
+            bnccSection += `\n\n   Desempenho do aluno nesta habilidade:`;
+            bnccSection += `\n   O aluno realizou ${b.atividadesCount} atividade${b.atividadesCount !== 1 ? 's' : ''} associada${b.atividadesCount !== 1 ? 's' : ''} a esta habilidade, obtendo ${b.acertos} acerto${b.acertos !== 1 ? 's' : ''} e ${b.erros} erro${b.erros !== 1 ? 's' : ''}`;
+            if (taxa !== null) bnccSection += ` (${taxa}% de aproveitamento)`;
+            bnccSection += `.`;
+            bnccSection += `\n   Nível de domínio: ${nivel} — ${nivelExplicacao}`;
             bnccSection += '\n';
         });
 
-        // Resumo cruzado
+        // Resumo cruzado consolidado
+        bnccSection += `\n─────────────────────────────────────────`;
+        bnccSection += `\nSíntese das habilidades BNCC do período:`;
         const fortes = bnccOrdenado.filter(b => {
             const t = (b.acertos + b.erros) > 0 ? Math.round((b.acertos / (b.acertos + b.erros)) * 100) : 0;
             return t >= 70;
@@ -447,17 +519,27 @@ function buildHeuristicReport(autonomy_percentage: number, logs: any[], bnccEnri
             const t = (b.acertos + b.erros) > 0 ? Math.round((b.acertos / (b.acertos + b.erros)) * 100) : 0;
             return t < 50;
         });
+        const emProgresso = bnccOrdenado.filter(b => {
+            const t = (b.acertos + b.erros) > 0 ? Math.round((b.acertos / (b.acertos + b.erros)) * 100) : 0;
+            return t >= 50 && t < 70;
+        });
 
         if (fortes.length > 0) {
-            bnccSection += `\nHabilidades com bom domínio (≥70%): ${fortes.map(b => b.code).join(', ')}.`;
+            bnccSection += `\n  • Habilidades consolidadas (≥70% de aproveitamento): ${fortes.map(b => b.code).join(', ')}.`;
+            bnccSection += ` O aluno demonstra bom domínio desses conteúdos, podendo avançar para atividades de maior complexidade dentro dessas habilidades.`;
+        }
+        if (emProgresso.length > 0) {
+            bnccSection += `\n  • Habilidades em progresso (50–69%): ${emProgresso.map(b => b.code).join(', ')}.`;
+            bnccSection += ` Há avanço, mas ainda é recomendável manter exposição continuada ao conteúdo.`;
         }
         if (fracas.length > 0) {
-            bnccSection += `\nHabilidades que necessitam de reforço (<50%): ${fracas.map(b => b.code).join(', ')}. Recomenda-se retomar esses conteúdos com estratégias diferenciadas e maior mediação pedagógica.`;
+            bnccSection += `\n  • Habilidades que necessitam de reforço (<50%): ${fracas.map(b => b.code).join(', ')}.`;
+            bnccSection += ` Recomenda-se retomar esses conteúdos com estratégias diferenciadas, atividades mais acessíveis e maior mediação pedagógica. O planejamento das próximas semanas deve priorizar essas habilidades.`;
         }
 
         sections.push(bnccSection);
     } else {
-        sections.push('══ HABILIDADES DA BNCC ══\nNão foram identificadas competências BNCC associadas às atividades do período. Recomenda-se verificar o mapeamento curricular das atividades utilizadas.');
+        sections.push('══ HABILIDADES DA BNCC ══\nNão foram identificadas competências BNCC associadas às atividades do período. Recomenda-se verificar o mapeamento curricular das atividades utilizadas, pois o vínculo com a BNCC é fundamental para garantir que o trabalho pedagógico esteja alinhado às aprendizagens essenciais previstas para a etapa de ensino do aluno.');
     }
 
     // ═══ SEÇÃO 4: AUTONOMIA E MEDIAÇÃO ═══════════════════════════════════

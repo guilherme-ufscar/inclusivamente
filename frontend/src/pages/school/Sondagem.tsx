@@ -151,7 +151,7 @@ const PERFIL_LABELS: Record<number, { label: string; color: string; desc: string
     2: { label: 'Perfil 2 – DI Leve + TEA', color: 'text-blue-700 bg-blue-100', desc: 'Apoio pedagógico estruturado + currículo funcional + reforço emocional' },
     3: { label: 'Perfil 3 – DI Severa + Motora', color: 'text-red-700 bg-red-100', desc: 'Apoio muito substancial 1:1 + foco em comunicação, conforto e inclusão afetiva' },
     4: { label: 'Perfil 4 – Baixa Complexidade', color: 'text-green-700 bg-green-100', desc: 'Estratégias pedagógicas universais, sem necessidade de apoio especializado contínuo' },
-    5: { label: 'Perfil 5 – Deficiência Visual', color: 'text-amber-700 bg-amber-100', desc: 'Acessibilidade visual + recursos de ampliação e contraste + autonomia digital monitorada' },
+    5: { label: 'Perfil 5 – Pessoa com Deficiência Visual', color: 'text-amber-700 bg-amber-100', desc: 'Acessibilidade visual + recursos de ampliação e contraste + autonomia digital monitorada' },
 };
 
 const DEF_VISUAL_TAB = 5;
@@ -349,11 +349,11 @@ export default function Sondagem() {
 
                 {/* Escala de referência */}
                 {dominioAtual < DOMINIOS.length && (
-                    <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4 mb-6">
-                        <p className="text-xs font-semibold text-indigo-700 mb-2 uppercase tracking-wide">Escala de Respostas</p>
+                    <div className="bg-indigo-600 border border-indigo-700 rounded-lg p-4 mb-6">
+                        <p className="text-xs font-semibold text-white mb-2 uppercase tracking-wide">Escala de Respostas</p>
                         <div className="flex flex-wrap gap-3">
                             {ESCALA.map(e => (
-                                <span key={e.value} className="text-xs text-indigo-600">
+                                <span key={e.value} className="text-xs text-white">
                                     <strong>{e.value}</strong> – {e.label.split('–')[1].trim()}
                                 </span>
                             ))}
@@ -365,11 +365,7 @@ export default function Sondagem() {
                 {dominioAtual === DEF_VISUAL_TAB && (
                     <div className="bg-white rounded-xl shadow-sm border p-6 space-y-6">
                         <div>
-                            <h2 className="text-base font-bold text-gray-800 mb-1">Perfil 5 – Deficiência Visual</h2>
-                            <p className="text-xs text-gray-500 leading-relaxed">
-                                Este perfil é atribuído diretamente quando há diagnóstico de baixa visão, visão subnormal ou dificuldades visuais,
-                                independentemente da pontuação obtida nas demais etapas.
-                            </p>
+                            <h2 className="text-base font-bold text-gray-800 mb-1">Perfil 5 – Pessoa com Deficiência Visual</h2>
                         </div>
                         <div className="border rounded-xl p-4 bg-amber-50 border-amber-200">
                             <p className="text-sm font-semibold text-amber-800 mb-3">
@@ -446,8 +442,8 @@ export default function Sondagem() {
                                 const gi = offsetDominio + i;
                                 return (
                                     <div key={gi} className="border-b pb-5 last:border-0 last:pb-0">
-                                        <p className="text-sm text-gray-700 mb-3 leading-relaxed">
-                                            <span className="font-semibold text-gray-400 mr-2">{gi + 1}.</span>{q}
+                                        <p className="text-sm text-gray-700 mb-3 leading-relaxed uppercase">
+                                            <span className="font-semibold text-gray-400 mr-2 normal-case">{gi + 1}.</span>{q}
                                         </p>
                                         <div className="flex gap-2 flex-wrap">
                                             {[0, 1, 2, 3, 4].map(v => (

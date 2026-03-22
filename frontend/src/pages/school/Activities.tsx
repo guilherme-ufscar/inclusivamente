@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card } from '../../components/ui/Card';
 import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
-import { BrainCircuit, Clock, CheckCircle2, AlertCircle, BookOpen, MessageSquare } from 'lucide-react';
+import { BrainCircuit, Clock, CheckCircle2, AlertCircle, BookOpen, MessageSquare, GraduationCap, Layers, BarChart2, Hash } from 'lucide-react';
 
 interface Student {
     id: string;
@@ -23,7 +23,28 @@ interface ActivityLog {
     autonomy_level: string;
     tutor_intervention_needed: string;
     tutor_observations: string;
+    bncc_codigo?: string | null;
     student?: { name: string };
+}
+
+const MATERIA_MAP: Record<string, string> = {
+    mt: 'Matemática', lp: 'Língua Portuguesa', cn: 'Ciências',
+    hi: 'História', ge: 'Geografia', ar: 'Arte',
+    ef: 'Educação Física', er: 'Ensino Religioso', li: 'Língua Inglesa',
+};
+
+function parseActivityId(activityId: string) {
+    if (!activityId) return null;
+    const parts = activityId.split('_');
+    if (parts.length < 5) return null;
+    const anoNum = parseInt(parts[0], 10);
+    return {
+        ano: isNaN(anoNum) ? parts[0] : `${anoNum}º Ano`,
+        disciplina: MATERIA_MAP[parts[1].toLowerCase()] || parts[1].toUpperCase(),
+        pilula: parts[2],
+        nivel: parts[3],
+        atividade: parts.slice(4).join('_'),
+    };
 }
 
 export default function SchoolActivities() {
@@ -112,41 +133,69 @@ export default function SchoolActivities() {
                     </div>
                 ) : (
                     <div className="divide-y divide-slate-100">
-                        {activities.map(act => (
-                            <div key={act.id} className="px-6 py-4 hover:bg-slate-50/50 transition-colors">
-                                <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <BrainCircuit className="w-5 h-5 text-brand-primary" />
-                                        <span className="font-medium text-slate-900">Atividade #{act.activity_id?.slice(-6)}</span>
+                        {activities.map(act => {
+                            const parsed = parseActivityId(act.activity_id);
+                            return (
+                                <div key={act.id} className="px-6 py-4 hover:bg-slate-50/50 transition-colors">
+                                    <div className="flex items-start justify-between mb-2 gap-4">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <BrainCircuit className="w-5 h-5 text-brand-primary shrink-0" />
+                                            <span className="font-medium text-slate-900 truncate">
+                                                {parsed ? parsed.atividade : `Atividade #${act.activity_id?.slice(-6)}`}
+                                            </span>
+                                        </div>
+                                        <span className="text-xs text-slate-500 shrink-0">
+                                            {new Date(act.started_at).toLocaleDateString('pt-BR')}
+                                        </span>
                                     </div>
-                                    <span className="text-xs text-slate-500">
-                                        {new Date(act.started_at).toLocaleDateString('pt-BR')}
-                                    </span>
+
+                                    {parsed && (
+                                        <div className="flex flex-wrap gap-2 mb-3">
+                                            <span className="bg-brand-primary/10 text-brand-primary px-2 py-0.5 rounded-md text-xs font-medium flex items-center gap-1">
+                                                <BookOpen className="w-3 h-3" /> {parsed.disciplina}
+                                            </span>
+                                            <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md text-xs flex items-center gap-1">
+                                                <GraduationCap className="w-3 h-3" /> {parsed.ano}
+                                            </span>
+                                            <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md text-xs flex items-center gap-1">
+                                                <Layers className="w-3 h-3" /> Pílula {parsed.pilula}
+                                            </span>
+                                            <span className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md text-xs flex items-center gap-1">
+                                                <BarChart2 className="w-3 h-3" /> Nível {parsed.nivel}
+                                            </span>
+                                            {act.bncc_codigo && (
+                                                <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md text-xs font-mono font-semibold flex items-center gap-1">
+                                                    <Hash className="w-3 h-3" /> {act.bncc_codigo}
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                                            <Clock className="w-4 h-4 text-slate-400" />
+                                            {formatDuration(act.time_spent)}
+                                        </div>
+                                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                                            {act.correct_count || 0} acertos
+                                        </div>
+                                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                                            <AlertCircle className="w-4 h-4 text-red-400" />
+                                            {act.errors_count || 0} erros
+                                        </div>
+                                        <div>
+                                            Autonomia: {getAutonomyBadge(act.autonomy_level)}
+                                        </div>
+                                    </div>
+                                    {act.tutor_observations && (
+                                        <p className="mt-2 text-sm text-slate-500 italic bg-slate-50 rounded-lg p-3 flex items-start gap-2">
+                                            <MessageSquare className="w-4 h-4 mt-0.5 shrink-0 text-slate-400" /> {act.tutor_observations}
+                                        </p>
+                                    )}
                                 </div>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
-                                    <div className="flex items-center gap-2 text-sm text-slate-600">
-                                        <Clock className="w-4 h-4 text-slate-400" />
-                                        {formatDuration(act.time_spent)}
-                                    </div>
-                                    <div className="flex items-center gap-2 text-sm text-slate-600">
-                                        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                                        {act.correct_count || 0} acertos
-                                    </div>
-                                    <div className="flex items-center gap-2 text-sm text-slate-600">
-                                        <AlertCircle className="w-4 h-4 text-red-400" />
-                                        {act.errors_count || 0} erros
-                                    </div>
-                                    <div>
-                                        Autonomia: {getAutonomyBadge(act.autonomy_level)}
-                                    </div>
-                                </div>
-                                {act.tutor_observations && (
-                                    <p className="mt-2 text-sm text-slate-500 italic bg-slate-50 rounded-lg p-3 flex items-start gap-2">
-                                        <MessageSquare className="w-4 h-4 mt-0.5 shrink-0 text-slate-400" /> {act.tutor_observations}
-                                    </p>
-                                )}
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </Card>

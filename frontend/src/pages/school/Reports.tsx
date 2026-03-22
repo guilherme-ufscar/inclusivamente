@@ -9,6 +9,7 @@ import { FileText, Search, ChevronRight, User, Calendar, BarChart2, Download, Br
 interface Student {
     id: string;
     name: string;
+    needs_tutor?: boolean;
     class?: { name: string };
     grade_level: string;
 }
@@ -42,12 +43,9 @@ export default function SchoolReports() {
     const [genStudentId, setGenStudentId] = useState('');
     const [filterType, setFilterType] = useState('period');
     const [activityCount, setActivityCount] = useState(5);
-    const [startDate, setStartDate] = useState(() => {
-        const d = new Date();
-        d.setMonth(d.getMonth() - 1);
-        return d.toISOString().split('T')[0];
-    });
-    const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
+    const [periodDays, setPeriodDays] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
 
     useEffect(() => {
@@ -126,6 +124,7 @@ export default function SchoolReports() {
 
     const handleDownloadPDF = (report: Report) => {
         const studentName = report.student?.name || selectedStudent?.name || 'Aluno';
+        const needsTutor = selectedStudent?.needs_tutor;
         const printWindow = window.open('', '', 'width=900,height=800');
         if (!printWindow) return;
 
@@ -141,7 +140,7 @@ export default function SchoolReports() {
                 .header { border-bottom: 2px solid #e2e8f0; padding-bottom: 24px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-start; }
                 h1 { color: #0f172a; margin: 0; font-size: 28px; font-weight: 800; }
                 .subtitle { color: #64748b; font-size: 15px; font-weight: 500; }
-                .dashboard-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
+                .dashboard-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
                 .stat-card { background: #f1f5f9; padding: 16px 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
                 .stat-label { font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 6px; letter-spacing: 0.05em; }
                 .stat-value { font-size: 20px; color: #0f172a; font-weight: 800; }
@@ -183,6 +182,10 @@ export default function SchoolReports() {
                       <div class="stat-card">
                           <div class="stat-label">Atividades Computadas</div>
                           <div class="stat-value">${(report.activities_without_tutor_count || 0) + (report.activities_with_tutor_count || 0)}</div>
+                      </div>
+                      <div class="stat-card" style="background:${needsTutor ? '#fffbeb' : '#f0fdf4'};border-color:${needsTutor ? '#fde68a' : '#bbf7d0'}">
+                          <div class="stat-label" style="color:${needsTutor ? '#92400e' : '#166534'}">Necessidade de Tutor</div>
+                          <div class="stat-value" style="font-size:14px;color:${needsTutor ? '#b45309' : '#15803d'};line-height:1.4;">${needsTutor ? '⚠ Necessita Tutor Especializado' : '✓ Não Necessita Tutor'}</div>
                       </div>
                   </div>
 
@@ -268,7 +271,7 @@ export default function SchoolReports() {
                             <div>
                                 <h4 className="font-medium text-slate-900 mb-2 flex items-center gap-2">
                                     <BrainCircuit className="w-4 h-4 text-emerald-500" />
-                                    Síntese Qualitativa (IA)
+                                    Síntese Qualitativa
                                 </h4>
                                 <div
                                     className="p-4 bg-slate-50 rounded-xl border-l-4 border-l-emerald-400 text-sm text-slate-700 leading-relaxed max-h-96 overflow-y-auto custom-scrollbar"
@@ -294,6 +297,9 @@ export default function SchoolReports() {
                                     <p className="text-xs text-slate-500 mb-2">Recomendação</p>
                                     {getRecommendationBadge(report.tutor_recommendation)}
                                 </div>
+                            </div>
+                            <div className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold border ${selectedStudent?.needs_tutor ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'}`}>
+                                {selectedStudent?.needs_tutor ? '⚠ Necessita Tutor Especializado' : '✓ Não Necessita Tutor Especializado'}
                             </div>
 
                             {/* Tutor observations */}
@@ -355,20 +361,33 @@ export default function SchoolReports() {
                     </div>
 
                     {filterType === 'period' ? (
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1">
-                                <label className="text-sm font-medium text-slate-700">Data Inicial</label>
-                                <input type="date" required className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary outline-none" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-medium text-slate-700">Data Final</label>
-                                <input type="date" required className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary outline-none" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-                            </div>
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-slate-700">Período de análise</label>
+                            <select
+                                required
+                                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                                value={periodDays}
+                                onChange={(e) => {
+                                    const days = Number(e.target.value);
+                                    setPeriodDays(e.target.value);
+                                    const end = new Date();
+                                    const start = new Date();
+                                    start.setDate(start.getDate() - days);
+                                    setStartDate(start.toISOString().split('T')[0]);
+                                    setEndDate(end.toISOString().split('T')[0]);
+                                }}
+                            >
+                                <option value="" disabled>Selecione o período</option>
+                                <option value="7">Última semana (7 dias)</option>
+                                <option value="30">Último mês (30 dias)</option>
+                                <option value="60">Últimos 60 dias</option>
+                            </select>
                         </div>
                     ) : (
                         <div className="space-y-1">
                             <label className="text-sm font-medium text-slate-700">Quantidade de Atividades Recentes</label>
-                            <input type="number" min={1} required className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary outline-none" value={activityCount} onChange={(e) => setActivityCount(Number(e.target.value))} />
+                            <input type="number" min={5} required className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary outline-none" value={activityCount} onChange={(e) => setActivityCount(Math.max(5, Number(e.target.value)))} />
+                            <p className="text-xs text-slate-400">Mínimo de 5 atividades.</p>
                         </div>
                     )}
 

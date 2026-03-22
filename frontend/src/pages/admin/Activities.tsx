@@ -3,7 +3,7 @@ import { Card } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
 import api from '../../services/api';
-import { Check, Activity, MessageSquare, RefreshCw } from 'lucide-react';
+import { Check, Activity, MessageSquare, RefreshCw, BookOpen, GraduationCap, Layers, BarChart2, Hash } from 'lucide-react';
 
 interface Student {
     id: string;
@@ -21,6 +21,28 @@ interface ActivityLog {
     correct_count?: number;
     errors_count?: number;
     time_spent?: number;
+    bncc_codigo?: string | null;
+}
+
+const MATERIA_MAP: Record<string, string> = {
+    mt: 'Matemática', lp: 'Língua Portuguesa', cn: 'Ciências',
+    hi: 'História', ge: 'Geografia', ar: 'Arte',
+    ef: 'Educação Física', er: 'Ensino Religioso', li: 'Língua Inglesa',
+};
+
+function parseActivityId(activityId: string) {
+    if (!activityId) return null;
+    const parts = activityId.split('_');
+    if (parts.length < 5) return null;
+    const anoRaw = parts[0];
+    const anoNum = parseInt(anoRaw, 10);
+    return {
+        ano: isNaN(anoNum) ? anoRaw : `${anoNum}º Ano`,
+        disciplina: MATERIA_MAP[parts[1].toLowerCase()] || parts[1].toUpperCase(),
+        pilula: parts[2],
+        nivel: parts[3],
+        atividade: parts.slice(4).join('_'),
+    };
 }
 
 export default function ActivitiesPage() {
@@ -124,28 +146,55 @@ export default function ActivitiesPage() {
                     ) : (
                         <div className="divide-y divide-slate-100">
                             {activities.map(log => (
-                                <div key={log.id} className="p-4 hover:bg-slate-50 transition-colors flex flex-col sm:flex-row items-center justify-between gap-4">
-                                    <div>
-                                        <h4 className="font-semibold text-slate-800">Atividade: {log.activity_id}</h4>
+                                <div key={log.id} className="p-4 hover:bg-slate-50 transition-colors flex flex-col sm:flex-row items-start justify-between gap-4">
+                                    <div className="flex-1 min-w-0">
+                                        {(() => {
+                                            const parsed = parseActivityId(log.activity_id);
+                                            return parsed ? (
+                                                <div className="mb-2">
+                                                    <h4 className="font-semibold text-slate-800 mb-1">{parsed.atividade}</h4>
+                                                    <div className="flex flex-wrap gap-2 text-xs">
+                                                        <span className="bg-brand-primary/10 text-brand-primary px-2 py-0.5 rounded-md font-medium flex items-center gap-1">
+                                                            <BookOpen className="w-3 h-3" /> {parsed.disciplina}
+                                                        </span>
+                                                        <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                                            <GraduationCap className="w-3 h-3" /> {parsed.ano}
+                                                        </span>
+                                                        <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                                            <Layers className="w-3 h-3" /> Pílula {parsed.pilula}
+                                                        </span>
+                                                        <span className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                                            <BarChart2 className="w-3 h-3" /> Nível {parsed.nivel}
+                                                        </span>
+                                                        {log.bncc_codigo && (
+                                                            <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md font-mono font-semibold flex items-center gap-1">
+                                                                <Hash className="w-3 h-3" /> {log.bncc_codigo}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <h4 className="font-semibold text-slate-800 mb-1">{log.activity_id}</h4>
+                                            );
+                                        })()}
                                         <p className="text-xs text-slate-500">Iniciado em: {new Date(log.started_at).toLocaleString('pt-BR')}</p>
                                         {log.completed_at && (
                                             <>
                                                 <p className="text-xs text-emerald-600 mt-1">Concluído em: {new Date(log.completed_at).toLocaleString('pt-BR')}</p>
-                                                {/* Exibição dos dados do game/webhook */}
                                                 <div className="flex gap-3 mt-2 mb-1 text-xs">
                                                     {log.correct_count !== undefined && (
                                                         <span className="bg-emerald-50 text-emerald-700 px-2 py-1 rounded-md border border-emerald-100">
-                                                            Acertos: <strong className="font-bold">{log.correct_count}</strong>
+                                                            Acertos: <strong>{log.correct_count}</strong>
                                                         </span>
                                                     )}
                                                     {log.errors_count !== undefined && (
                                                         <span className="bg-red-50 text-red-700 px-2 py-1 rounded-md border border-red-100">
-                                                            Erros: <strong className="font-bold">{log.errors_count}</strong>
+                                                            Erros: <strong>{log.errors_count}</strong>
                                                         </span>
                                                     )}
                                                     {log.time_spent !== undefined && (
                                                         <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-md border border-slate-200">
-                                                            Tempo: {log.time_spent}s
+                                                            Tempo: {Math.floor(log.time_spent / 60)}m {log.time_spent % 60}s
                                                         </span>
                                                     )}
                                                 </div>
