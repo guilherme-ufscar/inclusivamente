@@ -28,7 +28,7 @@ interface ActivityLog {
 }
 
 const MATERIA_MAP: Record<string, string> = {
-    mt: 'Matemática', lp: 'Língua Portuguesa', cn: 'Ciências',
+    mt: 'Matemática', ma: 'Matemática', lp: 'Língua Portuguesa', pt: 'Língua Portuguesa', cn: 'Ciências',
     hi: 'História', ge: 'Geografia', ar: 'Arte',
     ef: 'Educação Física', er: 'Ensino Religioso', li: 'Língua Inglesa',
 };
